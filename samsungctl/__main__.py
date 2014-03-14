@@ -8,7 +8,7 @@ import sys
 
 from . import __title__
 from . import __version__
-from . import remote
+from .remote import Remote
 
 def read_config():
 	config = collections.defaultdict(lambda: None, {
@@ -59,7 +59,7 @@ def main():
 		parser.print_help()
 		sys.exit()
 
-	with remote.Remote(args.host, args.port, args.name, args.description, args.id) as remote:
+	with Remote(args.host, args.port, args.name, args.description, args.id) as remote:
 		for key in args.key:
 			remote.control(key)
 
