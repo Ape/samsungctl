@@ -43,8 +43,8 @@ config = read_config()
 parser = argparse.ArgumentParser(prog=__title__,
                                  description="Remote control Samsung televisions via TCP/IP connection.",
                                  epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
-parser.add_argument('--version', action='version', version="%(prog)s {0}".format(__version__))
-parser.add_argument("key", help="key to be sent (e.g. KEY_VOLDOWN)")
+parser.add_argument("--version", action="version", version="%(prog)s {0}".format(__version__))
+parser.add_argument("key", nargs="+", help="keys to be sent (e.g. KEY_VOLDOWN)")
 parser.add_argument("--host", default=config["host"], help="TV hostname or IP address")
 parser.add_argument("--name", default=config["name"], help="remote control name")
 parser.add_argument("--description", default=config["description"], help="remote control description")
@@ -59,4 +59,5 @@ if not args.host:
 	sys.exit()
 
 with remote.Remote(args.host, args.port, args.name, args.description, args.id) as remote:
-	remote.control(args.key)
+	for key in args.key:
+		remote.control(key)
