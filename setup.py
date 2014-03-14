@@ -2,13 +2,15 @@
 
 import setuptools
 
-setuptools.setup(name="samsungctl",
-      version="0.1.0",
-      description="Remote control Samsung televisions via TCP/IP connection",
-      url="https://github.com/Ape/samsungctl",
-      author="Lauri Niskanen",
-      author_email="ape@ape3000.com",
-      license="MIT",
+import samsungctl
+
+setuptools.setup(name=samsungctl.__title__,
+      version=samsungctl.__version__,
+      description=samsungctl.__doc__,
+      url=samsungctl.__url__,
+      author=samsungctl.__author__,
+      author_email=samsungctl.__author_email__,
+      license=samsungctl.__license__,
       long_description=open("README.md").read(),
       entry_points={
         "console_scripts": ["samsungctl=samsungctl.__main__"]
