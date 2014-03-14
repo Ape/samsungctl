@@ -1,3 +1,0 @@
-- read response
-	- show error messages
-	- wait for user authorization
