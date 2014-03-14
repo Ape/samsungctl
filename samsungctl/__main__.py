@@ -6,6 +6,8 @@ import json
 import os
 import sys
 
+from . import __title__
+from . import __version__
 from . import remote
 
 def read_config():
@@ -38,8 +40,10 @@ def read_config():
 
 config = read_config()
 
-parser = argparse.ArgumentParser(description="Remote control Samsung televisions via TCP/IP connection.",
-								 epilog="E.g. {0} --host 192.168.0.10 --name myremote KEY_VOLDOWN".format(sys.argv[0]))
+parser = argparse.ArgumentParser(prog=__title__,
+                                 description="Remote control Samsung televisions via TCP/IP connection.",
+								 epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
+parser.add_argument('--version', action='version', version="%(prog)s {0}".format(__version__))
 parser.add_argument("key", help="key to be sent (e.g. KEY_VOLDOWN)")
 parser.add_argument("--host", default=config["host"], help="TV hostname or IP address")
 parser.add_argument("--name", default=config["name"], help="remote control name")
