@@ -31,8 +31,6 @@ Supported models
 
 Roadmap
 -------
-- Make a first release
-	- Release on PyPI
 - Read the response from TV
 	- Show error messages
 	- Wait for user authorization
