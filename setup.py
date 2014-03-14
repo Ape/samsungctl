@@ -3,7 +3,7 @@
 import setuptools
 
 setuptools.setup(name="samsungctl",
-      version="0.0.0",
+      version="0.1.0",
       description="Remote control Samsung televisions via TCP/IP connection",
       url="https://github.com/Ape/samsungctl",
       author="Lauri Niskanen",
