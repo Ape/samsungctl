@@ -38,26 +38,29 @@ def read_config():
 
 	return config
 
-config = read_config()
+def main():
+	config = read_config()
 
-parser = argparse.ArgumentParser(prog=__title__,
-                                 description="Remote control Samsung televisions via TCP/IP connection.",
-                                 epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
-parser.add_argument("--version", action="version", version="%(prog)s {0}".format(__version__))
-parser.add_argument("key", nargs="+", help="keys to be sent (e.g. KEY_VOLDOWN)")
-parser.add_argument("--host", default=config["host"], help="TV hostname or IP address")
-parser.add_argument("--name", default=config["name"], help="remote control name")
-parser.add_argument("--description", default=config["description"], help="remote control description")
-parser.add_argument("--id", default=config["id"], help="remote control id")
-parser.add_argument("--port", type=int, default=config["port"], help="TV port number (TCP)")
+	parser = argparse.ArgumentParser(prog=__title__,
+									 description="Remote control Samsung televisions via TCP/IP connection.",
+									 epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
+	parser.add_argument("--version", action="version", version="%(prog)s {0}".format(__version__))
+	parser.add_argument("key", nargs="+", help="keys to be sent (e.g. KEY_VOLDOWN)")
+	parser.add_argument("--host", default=config["host"], help="TV hostname or IP address")
+	parser.add_argument("--name", default=config["name"], help="remote control name")
+	parser.add_argument("--description", default=config["description"], help="remote control description")
+	parser.add_argument("--id", default=config["id"], help="remote control id")
+	parser.add_argument("--port", type=int, default=config["port"], help="TV port number (TCP)")
 
-args = parser.parse_args()
+	args = parser.parse_args()
 
-if not args.host:
-	print("Error: --host must be set")
-	parser.print_help()
-	sys.exit()
+	if not args.host:
+		print("Error: --host must be set")
+		parser.print_help()
+		sys.exit()
 
-with remote.Remote(args.host, args.port, args.name, args.description, args.id) as remote:
-	for key in args.key:
-		remote.control(key)
+	with remote.Remote(args.host, args.port, args.name, args.description, args.id) as remote:
+		for key in args.key:
+			remote.control(key)
+
+main()

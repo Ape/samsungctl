@@ -13,7 +13,7 @@ setuptools.setup(name=samsungctl.__title__,
       license=samsungctl.__license__,
       long_description=open("README.md").read(),
       entry_points={
-        "console_scripts": ["samsungctl=samsungctl.__main__"]
+        "console_scripts": ["samsungctl=samsungctl.__main__:main"]
       },
       packages=["samsungctl"],
       install_requires=[],
