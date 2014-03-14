@@ -9,7 +9,11 @@ samsungctl requires Python 3, but currently no additional libraries.
 
 Command line tool quick help
 ----------------------------
-The command line tool can be run with
+The command line tool can be installed with
+
+	python setup.py install
+
+or run without installation with
 
 	python -m samsungctl
 
