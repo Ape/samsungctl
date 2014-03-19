@@ -39,8 +39,8 @@ def read_config():
 
 def main():
 	parser = argparse.ArgumentParser(prog=__title__,
-									 description="Remote control Samsung televisions via TCP/IP connection.",
-									 epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
+	                                 description="Remote control Samsung televisions via TCP/IP connection.",
+	                                 epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
 	parser.add_argument("--version", action="version", version="%(prog)s {0}".format(__version__))
 	parser.add_argument("-v", action="count", help="increase output verbosity")
 	parser.add_argument("-q", action="store_true", help="suppress non-fatal output")
