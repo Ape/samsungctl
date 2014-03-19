@@ -29,12 +29,6 @@ Supported models
 - UE40EH6030
 - probably almost all modern Samsung TVs with ethernet or Wi-Fi connection
 
-Roadmap
--------
-- Read the response from TV
-	- Show error messages
-	- Wait for user authorization
-
 References
 ----------
 I did not reverse engineer the control protocol myself and samsungctl is not
