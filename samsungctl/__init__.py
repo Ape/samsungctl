@@ -1,7 +1,7 @@
 """Remote control Samsung televisions via TCP/IP connection"""
 
 __title__        = "samsungctl"
-__version__      = "0.1.1-git"
+__version__      = "0.2.0-git"
 __url__          = "https://github.com/Ape/samsungctl"
 __author__       = "Lauri Niskanen"
 __author_email__ = "ape@ape3000.com"
