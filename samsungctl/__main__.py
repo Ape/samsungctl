@@ -3,6 +3,7 @@
 import argparse
 import collections
 import json
+import logging
 import os
 import sys
 
@@ -29,9 +30,7 @@ def read_config():
 		try:
 			config_json = json.load(config_file)
 		except ValueError as e:
-			print("Warning: Could not parse the configuration file.")
-			print(e)
-			print()
+			logging.warning("Warning: Could not parse the configuration file.\n  %s", e)
 			return config
 
 		config.update(config_json)
@@ -39,6 +38,8 @@ def read_config():
 	return config
 
 def main():
+	logging.basicConfig(format="%(message)s", level=logging.WARNING)
+
 	config = read_config()
 
 	parser = argparse.ArgumentParser(prog=__title__,
@@ -55,11 +56,17 @@ def main():
 	args = parser.parse_args()
 
 	if not args.host:
-		print("Error: --host must be set")
+		logging.error("Error: --host must be set")
 		parser.print_help()
-		sys.exit()
+		return
 
-	with Remote(args.host, args.port, args.name, args.description, args.id) as remote:
+	try:
+		remote = Remote(args.host, args.port, args.name, args.description, args.id)
+	except Remote.AccessDenied:
+		logging.error("Error: Access denied!")
+		return
+
+	with remote:
 		for key in args.key:
 			remote.control(key)
 
