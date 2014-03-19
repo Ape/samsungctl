@@ -38,30 +38,46 @@ def read_config():
 	return config
 
 def main():
-	logging.basicConfig(format="%(message)s", level=logging.WARNING)
-
-	config = read_config()
-
 	parser = argparse.ArgumentParser(prog=__title__,
 									 description="Remote control Samsung televisions via TCP/IP connection.",
 									 epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
 	parser.add_argument("--version", action="version", version="%(prog)s {0}".format(__version__))
+	parser.add_argument("-v", action="count", help="increase output verbosity")
+	parser.add_argument("-q", action="store_true", help="suppress non-fatal output")
 	parser.add_argument("key", nargs="+", help="keys to be sent (e.g. KEY_VOLDOWN)")
-	parser.add_argument("--host", default=config["host"], help="TV hostname or IP address")
-	parser.add_argument("--name", default=config["name"], help="remote control name")
-	parser.add_argument("--description", default=config["description"], help="remote control description")
-	parser.add_argument("--id", default=config["id"], help="remote control id")
-	parser.add_argument("--port", type=int, default=config["port"], help="TV port number (TCP)")
+	parser.add_argument("--host", help="TV hostname or IP address")
+	parser.add_argument("--name", help="remote control name")
+	parser.add_argument("--description", help="remote control description")
+	parser.add_argument("--id", help="remote control id")
+	parser.add_argument("--port", type=int, help="TV port number (TCP)")
 
 	args = parser.parse_args()
 
-	if not args.host:
+	if args.q:
+		log_level = logging.ERROR
+	elif not args.v:
+		log_level = logging.WARNING
+	elif args.v == 1:
+		log_level = logging.INFO
+	else:
+		log_level = logging.DEBUG
+
+	logging.basicConfig(format="%(message)s", level=log_level)
+
+	config = read_config()
+
+	host = args.host or config["host"]
+	name = args.name or config["name"]
+	description = args.description or config["description"]
+	id = args.id or config["id"]
+	port = args.port or config["port"]
+
+	if not host:
 		logging.error("Error: --host must be set")
-		parser.print_help()
 		return
 
 	try:
-		remote = Remote(args.host, args.port, args.name, args.description, args.id)
+		remote = Remote(host, port, name, description, id)
 	except Remote.AccessDenied:
 		logging.error("Error: Access denied!")
 		return

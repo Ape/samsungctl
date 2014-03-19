@@ -57,7 +57,7 @@ class Remote():
 		response = self.connection.recv(response_len)
 
 		if response == b"\x64\x00\x01\x00":
-			logging.info("Access granted.")
+			logging.debug("Access granted.")
 			return
 		elif response == b"\x64\x00\x00\x00":
 			raise self.AccessDenied()
