@@ -12,7 +12,7 @@ from . import __version__
 from . import interactive
 from .remote import Remote
 
-def read_config():
+def _read_config():
 	config = collections.defaultdict(lambda: None, {
 		"name": "samsungctl",
 		"description": "PC",
@@ -20,11 +20,26 @@ def read_config():
 		"port": 55000,
 	})
 
-	config_directory = os.getenv("XDG_CONFIG_HOME") or os.path.join(os.getenv("HOME"), ".config")
+	file_loaded = False
+	directories = []
 
-	try:
-		config_file = open(os.path.join(config_directory, "samsungctl.conf"))
-	except FileNotFoundError:
+	xdg_config = os.getenv("XDG_CONFIG_HOME")
+	if xdg_config:
+		directories.append(xdg_config)
+
+	directories.append(os.path.join(os.getenv("HOME"), ".config"))
+	directories.append("/etc")
+
+	for directory in directories:
+		try:
+			config_file = open(os.path.join(directory, "samsungctl.conf"))
+		except FileNotFoundError:
+			continue
+		else:
+			file_loaded = True
+			break
+
+	if not file_loaded:
 		return config
 
 	with config_file:
@@ -70,7 +85,7 @@ def main():
 		logging.error("Error: At least one key or --interactive must be set.")
 		return
 
-	config = read_config()
+	config = _read_config()
 
 	host = args.host or config["host"]
 	name = args.name or config["name"]
