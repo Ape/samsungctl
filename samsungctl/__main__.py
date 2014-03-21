@@ -95,4 +95,5 @@ def main():
 			for key in args.key:
 				remote.control(key)
 
-main()
+if __name__ == "__main__":
+	main()
