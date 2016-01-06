@@ -50,7 +50,8 @@ def _control(stdscr, remote):
     mappings_dict = {}
     for mapping in _mappings:
         mappings_dict[mapping[0]] = mapping[1]
-        stdscr.addstr("  {0}= {1}\n".format(mapping[2].ljust(column_len), mapping[3]))
+        stdscr.addstr("  {}= {} ({})\n".format(mapping[2].ljust(column_len),
+                                               mapping[3], mapping[1]))
 
     running = True
     while running:
