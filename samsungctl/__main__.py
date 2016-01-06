@@ -5,7 +5,6 @@ import collections
 import json
 import logging
 import os
-import sys
 
 from . import __title__
 from . import __version__
