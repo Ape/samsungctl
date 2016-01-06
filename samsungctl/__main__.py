@@ -3,6 +3,7 @@ import collections
 import json
 import logging
 import os
+import socket
 
 from . import __title__
 from . import __version__
@@ -15,6 +16,7 @@ def _read_config():
         "description": "PC",
         "id": "",
         "port": 55000,
+        "timeout": 0,
     })
 
     file_loaded = False
@@ -64,6 +66,7 @@ def main():
     parser.add_argument("--id", help="remote control id")
     parser.add_argument("--port", type=int, help="TV port number (TCP)")
     parser.add_argument("--interactive", action="store_true", help="interactive control")
+    parser.add_argument("--timeout", type=float, help="socket timeout in seconds (0 = no timeout)")
 
     args = parser.parse_args()
 
@@ -89,15 +92,18 @@ def main():
     description = args.description or config["description"]
     id = args.id or config["id"]
     port = args.port or config["port"]
+    timeout = args.timeout or config["timeout"]
 
     if not host:
         logging.error("Error: --host must be set")
         return
 
     try:
-        remote = Remote(host, port, name, description, id)
+        remote = Remote(host, port, name, description, id, timeout)
     except Remote.AccessDenied:
         logging.error("Error: Access denied!")
+    except socket.timeout:
+        logging.error("Error: Timed out!")
     except OSError as e:
         logging.error("Error: {}".format(e.strerror))
     else:

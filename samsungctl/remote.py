@@ -10,8 +10,12 @@ class Remote():
     class UnhandledResponse(Exception):
         pass
 
-    def __init__(self, host, port, name, description, id):
+    def __init__(self, host, port, name, description, id, timeout):
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        if timeout:
+            self.connection.settimeout(timeout)
+
         self.connection.connect((host, port))
 
         payload = b"\x64\x00" +\
