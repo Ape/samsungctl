@@ -63,7 +63,7 @@ def main():
     parser.add_argument("--host", help="TV hostname or IP address")
     parser.add_argument("--port", type=int, help="TV port number (TCP)")
     parser.add_argument("--name", help="remote control name")
-    parser.add_argument("--description", help="remote control description")
+    parser.add_argument("--description", metavar="DESC", help="remote control description")
     parser.add_argument("--id", help="remote control id")
     parser.add_argument("--timeout", type=float, help="socket timeout in seconds (0 = no timeout)")
     parser.add_argument("key", nargs="*", help="keys to be sent (e.g. KEY_VOLDOWN)")
