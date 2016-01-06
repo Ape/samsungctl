@@ -39,6 +39,7 @@ _mappings = [
 ]
 
 def run(remote):
+    """Run interactive remote control application."""
     curses.wrapper(_control, remote)
 
 def _control(stdscr, remote):

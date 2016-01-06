@@ -4,13 +4,18 @@ import socket
 import time
 
 class Remote():
+    """Object for remote control connection."""
+
     class AccessDenied(Exception):
+        """Connection was denied."""
         pass
 
     class UnhandledResponse(Exception):
+        """Received unknown response."""
         pass
 
     def __init__(self, host, port, name, description, id, timeout):
+        """Make a new connection."""
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         if timeout:
@@ -35,9 +40,11 @@ class Remote():
         self.close()
 
     def close(self):
+        """Close the connection."""
         self.connection.close()
 
     def control(self, key):
+        """Send a control command."""
         payload = b"\x00\x00\x00" + self._serialize_string(str.encode(key))
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
