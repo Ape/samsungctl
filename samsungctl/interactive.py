@@ -39,9 +39,9 @@ _mappings = [
 ]
 
 def run(remote):
-    curses.wrapper(control, remote)
+    curses.wrapper(_control, remote)
 
-def control(stdscr, remote):
+def _control(stdscr, remote):
     stdscr.addstr("Interactive mode\n\n", curses.A_BOLD)
     stdscr.addstr("The key mappings are listed below. Press 'q' to exit.\n")
 
