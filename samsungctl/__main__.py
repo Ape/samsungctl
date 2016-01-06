@@ -98,14 +98,15 @@ def main():
         remote = Remote(host, port, name, description, id)
     except Remote.AccessDenied:
         logging.error("Error: Access denied!")
-        return
-
-    with remote:
-        if args.interactive:
-            interactive.run(remote)
-        else:
-            for key in args.key:
-                remote.control(key)
+    except OSError as e:
+        logging.error("Error: {}".format(e.strerror))
+    else:
+        with remote:
+            if args.interactive:
+                interactive.run(remote)
+            else:
+                for key in args.key:
+                    remote.control(key)
 
 if __name__ == "__main__":
     main()
