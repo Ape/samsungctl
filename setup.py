@@ -23,6 +23,6 @@ setuptools.setup(
         "Environment :: Console",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Topic :: Home Automation"
-    ]
+        "Topic :: Home Automation",
+    ],
 )
