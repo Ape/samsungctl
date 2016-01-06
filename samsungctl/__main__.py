@@ -57,24 +57,24 @@ def main():
     parser = argparse.ArgumentParser(prog=__title__, description=__doc__,
                                      epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
     parser.add_argument("--version", action="version", version="%(prog)s {0}".format(__version__))
-    parser.add_argument("-v", action="count", help="increase output verbosity")
-    parser.add_argument("-q", action="store_true", help="suppress non-fatal output")
+    parser.add_argument("-v", "--verbose", action="count", help="increase output verbosity")
+    parser.add_argument("-q", "--quiet", action="store_true", help="suppress non-fatal output")
     parser.add_argument("key", nargs="*", help="keys to be sent (e.g. KEY_VOLDOWN)")
     parser.add_argument("--host", help="TV hostname or IP address")
     parser.add_argument("--name", help="remote control name")
     parser.add_argument("--description", help="remote control description")
     parser.add_argument("--id", help="remote control id")
     parser.add_argument("--port", type=int, help="TV port number (TCP)")
-    parser.add_argument("--interactive", action="store_true", help="interactive control")
+    parser.add_argument("-i", "--interactive", action="store_true", help="interactive control")
     parser.add_argument("--timeout", type=float, help="socket timeout in seconds (0 = no timeout)")
 
     args = parser.parse_args()
 
-    if args.q:
+    if args.quiet:
         log_level = logging.ERROR
-    elif not args.v:
+    elif not args.verbose:
         log_level = logging.WARNING
-    elif args.v == 1:
+    elif args.verbose == 1:
         log_level = logging.INFO
     else:
         log_level = logging.DEBUG
