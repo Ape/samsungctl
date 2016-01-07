@@ -4,24 +4,33 @@ import socket
 import time
 
 class Remote():
+    """Object for remote control connection."""
+
+    class ConnectionClosed(Exception):
+        """Connection was closed."""
+        pass
+
     class AccessDenied(Exception):
+        """Connection was denied."""
         pass
 
     class UnhandledResponse(Exception):
+        """Received unknown response."""
         pass
 
-    def __init__(self, host, port, name, description, id, timeout):
+    def __init__(self, config):
+        """Make a new connection."""
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        if timeout:
-            self.connection.settimeout(timeout)
+        if config["timeout"]:
+            self.connection.settimeout(config["timeout"])
 
-        self.connection.connect((host, port))
+        self.connection.connect((config["host"], config["port"]))
 
-        payload = b"\x64\x00" +\
-                  self._serialize_string(str.encode(description)) +\
-                  self._serialize_string(str.encode(id)) +\
-                  self._serialize_string(str.encode(name))
+        payload = b"\x64\x00" \
+                  + self._serialize_string(config["description"]) \
+                  + self._serialize_string(config["id"]) \
+                  + self._serialize_string(config["name"])
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
         logging.info("Sending handshake.")
@@ -35,13 +44,21 @@ class Remote():
         self.close()
 
     def close(self):
-        self.connection.close()
+        """Close the connection."""
+        if self.connection:
+            self.connection.close()
+            self.connection = None
+            logging.debug("Connection closed.")
 
     def control(self, key):
-        payload = b"\x00\x00\x00" + self._serialize_string(str.encode(key))
+        """Send a control command."""
+        if not self.connection:
+            raise self.ConnectionClosed()
+
+        payload = b"\x00\x00\x00" + self._serialize_string(key)
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
-        logging.info("Sending control command.")
+        logging.info("Sending control command: %s", key)
         self.connection.send(packet)
         self._read_response()
         time.sleep(self._key_interval)
@@ -54,9 +71,16 @@ class Remote():
                                      byteorder="little")
         tv_name = self.connection.recv(tv_name_len)
 
+        if first_time:
+            logging.debug("Connected to '%s'.", tv_name.decode())
+
         response_len = int.from_bytes(self.connection.recv(2),
                                       byteorder="little")
         response = self.connection.recv(response_len)
+
+        if len(response) == 0:
+            self.close()
+            raise self.ConnectionClosed()
 
         if response == b"\x64\x00\x01\x00":
             logging.debug("Access granted.")
@@ -78,6 +102,9 @@ class Remote():
 
     @staticmethod
     def _serialize_string(string, raw = False):
+        if isinstance(string, str):
+            string = str.encode(string)
+
         if not raw:
             string = base64.b64encode(string)
 

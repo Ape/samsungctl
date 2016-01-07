@@ -5,10 +5,11 @@ import logging
 import os
 import socket
 
-from . import __title__
-from . import __version__
+from . import __doc__ as doc
+from . import __title__ as title
+from . import __version__ as version
 from . import interactive
-from .remote import Remote
+from . import Remote
 
 def _read_config():
     config = collections.defaultdict(lambda: None, {
@@ -53,66 +54,65 @@ def _read_config():
     return config
 
 def main():
-    parser = argparse.ArgumentParser(prog=__title__,
-                                     description="Remote control Samsung televisions via TCP/IP connection.",
+    parser = argparse.ArgumentParser(prog=title, description=doc,
                                      epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
-    parser.add_argument("--version", action="version", version="%(prog)s {0}".format(__version__))
-    parser.add_argument("-v", action="count", help="increase output verbosity")
-    parser.add_argument("-q", action="store_true", help="suppress non-fatal output")
-    parser.add_argument("key", nargs="*", help="keys to be sent (e.g. KEY_VOLDOWN)")
+    parser.add_argument("--version", action="version",
+                        version="%(prog)s {0}".format(version))
+    parser.add_argument("-v", "--verbose", action="count",
+                        help="increase output verbosity")
+    parser.add_argument("-q", "--quiet", action="store_true",
+                        help="suppress non-fatal output")
+    parser.add_argument("-i", "--interactive", action="store_true",
+                        help="interactive control")
     parser.add_argument("--host", help="TV hostname or IP address")
-    parser.add_argument("--name", help="remote control name")
-    parser.add_argument("--description", help="remote control description")
-    parser.add_argument("--id", help="remote control id")
     parser.add_argument("--port", type=int, help="TV port number (TCP)")
-    parser.add_argument("--interactive", action="store_true", help="interactive control")
-    parser.add_argument("--timeout", type=float, help="socket timeout in seconds (0 = no timeout)")
+    parser.add_argument("--name", help="remote control name")
+    parser.add_argument("--description", metavar="DESC",
+                        help="remote control description")
+    parser.add_argument("--id", help="remote control id")
+    parser.add_argument("--timeout", type=float,
+                        help="socket timeout in seconds (0 = no timeout)")
+    parser.add_argument("key", nargs="*",
+                        help="keys to be sent (e.g. KEY_VOLDOWN)")
 
     args = parser.parse_args()
 
-    if args.q:
+    if args.quiet:
         log_level = logging.ERROR
-    elif not args.v:
+    elif not args.verbose:
         log_level = logging.WARNING
-    elif args.v == 1:
+    elif args.verbose == 1:
         log_level = logging.INFO
     else:
         log_level = logging.DEBUG
 
     logging.basicConfig(format="%(message)s", level=log_level)
 
-    if not args.key and not args.interactive:
-        logging.error("Error: At least one key or --interactive must be set.")
-        return
-
     config = _read_config()
+    config.update({k: v for k, v in vars(args).items() if v is not None})
 
-    host = args.host or config["host"]
-    name = args.name or config["name"]
-    description = args.description or config["description"]
-    id = args.id or config["id"]
-    port = args.port or config["port"]
-    timeout = args.timeout or config["timeout"]
-
-    if not host:
+    if not config["host"]:
         logging.error("Error: --host must be set")
         return
 
     try:
-        remote = Remote(host, port, name, description, id, timeout)
+        with Remote(config) as remote:
+            for key in args.key:
+                remote.control(key)
+
+            if args.interactive:
+                logging.getLogger().setLevel(logging.ERROR)
+                interactive.run(remote)
+            elif len(args.key) == 0:
+                logging.warning("Warning: No keys specified.")
+    except Remote.ConnectionClosed:
+        logging.error("Error: Connection closed!")
     except Remote.AccessDenied:
         logging.error("Error: Access denied!")
     except socket.timeout:
         logging.error("Error: Timed out!")
     except OSError as e:
-        logging.error("Error: {}".format(e.strerror))
-    else:
-        with remote:
-            if args.interactive:
-                interactive.run(remote)
-            else:
-                for key in args.key:
-                    remote.control(key)
+        logging.error("Error: %s", e.strerror)
 
 if __name__ == "__main__":
     main()
