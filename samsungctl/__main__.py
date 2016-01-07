@@ -9,7 +9,7 @@ from . import __doc__
 from . import __title__
 from . import __version__
 from . import interactive
-from .remote import Remote
+from . import Remote
 
 def _read_config():
     config = collections.defaultdict(lambda: None, {
