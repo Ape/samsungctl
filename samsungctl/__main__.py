@@ -88,10 +88,6 @@ def main():
 
     logging.basicConfig(format="%(message)s", level=log_level)
 
-    if not args.key and not args.interactive:
-        logging.error("Error: At least one key or --interactive must be set.")
-        return
-
     config = _read_config()
     config.update({k: v for k, v in vars(args).items() if v is not None})
 
@@ -101,12 +97,14 @@ def main():
 
     try:
         with Remote(config) as remote:
+            for key in args.key:
+                remote.control(key)
+
             if args.interactive:
                 logging.getLogger().setLevel(logging.ERROR)
                 interactive.run(remote)
-            else:
-                for key in args.key:
-                    remote.control(key)
+            elif len(args.key) == 0:
+                logging.warning("Warning: No keys specified.")
     except Remote.ConnectionClosed:
         logging.error("Error: Connection closed!")
     except Remote.AccessDenied:
