@@ -57,7 +57,7 @@ class Remote():
         payload = b"\x00\x00\x00" + self._serialize_string(key)
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
-        logging.info("Sending control command.")
+        logging.info("Sending control command: {}".format(key))
         self.connection.send(packet)
         self._read_response()
         time.sleep(self._key_interval)
