@@ -93,20 +93,14 @@ def main():
         return
 
     config = _read_config()
+    config.update({k: v for k, v in vars(args).items() if v is not None})
 
-    host = args.host or config["host"]
-    name = args.name or config["name"]
-    description = args.description or config["description"]
-    id = args.id or config["id"]
-    port = args.port or config["port"]
-    timeout = args.timeout or config["timeout"]
-
-    if not host:
+    if not config["host"]:
         logging.error("Error: --host must be set")
         return
 
     try:
-        with Remote(host, port, name, description, id, timeout) as remote:
+        with Remote(config) as remote:
             if args.interactive:
                 interactive.run(remote)
             else:

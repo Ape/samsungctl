@@ -18,19 +18,19 @@ class Remote():
         """Received unknown response."""
         pass
 
-    def __init__(self, host, port, name, description, id, timeout):
+    def __init__(self, config):
         """Make a new connection."""
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        if timeout:
-            self.connection.settimeout(timeout)
+        if config["timeout"]:
+            self.connection.settimeout(config["timeout"])
 
-        self.connection.connect((host, port))
+        self.connection.connect((config["host"], config["port"]))
 
-        payload = b"\x64\x00" +\
-                  self._serialize_string(description) +\
-                  self._serialize_string(id) +\
-                  self._serialize_string(name)
+        payload = b"\x64\x00" \
+                  + self._serialize_string(config["description"]) \
+                  + self._serialize_string(config["id"]) \
+                  + self._serialize_string(config["name"])
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
         logging.info("Sending handshake.")
