@@ -5,9 +5,9 @@ import logging
 import os
 import socket
 
-from . import __doc__
-from . import __title__
-from . import __version__
+from . import __doc__ as doc
+from . import __title__ as title
+from . import __version__ as version
 from . import interactive
 from . import Remote
 
@@ -54,10 +54,10 @@ def _read_config():
     return config
 
 def main():
-    parser = argparse.ArgumentParser(prog=__title__, description=__doc__,
+    parser = argparse.ArgumentParser(prog=title, description=doc,
                                      epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
     parser.add_argument("--version", action="version",
-                        version="%(prog)s {0}".format(__version__))
+                        version="%(prog)s {0}".format(version))
     parser.add_argument("-v", "--verbose", action="count",
                         help="increase output verbosity")
     parser.add_argument("-q", "--quiet", action="store_true",
