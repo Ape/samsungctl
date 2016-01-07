@@ -28,9 +28,9 @@ class Remote():
         self.connection.connect((host, port))
 
         payload = b"\x64\x00" +\
-                  self._serialize_string(str.encode(description)) +\
-                  self._serialize_string(str.encode(id)) +\
-                  self._serialize_string(str.encode(name))
+                  self._serialize_string(description) +\
+                  self._serialize_string(id) +\
+                  self._serialize_string(name)
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
         logging.info("Sending handshake.")
@@ -54,7 +54,7 @@ class Remote():
         if not self.connection:
             raise self.ConnectionClosed()
 
-        payload = b"\x00\x00\x00" + self._serialize_string(str.encode(key))
+        payload = b"\x00\x00\x00" + self._serialize_string(key)
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
         logging.info("Sending control command.")
@@ -98,6 +98,9 @@ class Remote():
 
     @staticmethod
     def _serialize_string(string, raw = False):
+        if isinstance(string, str):
+            string = str.encode(string)
+
         if not raw:
             string = base64.b64encode(string)
 
