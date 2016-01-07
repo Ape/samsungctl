@@ -48,6 +48,7 @@ class Remote():
         if self.connection:
             self.connection.close()
             self.connection = None
+            logging.debug("Connection closed.")
 
     def control(self, key):
         """Send a control command."""
