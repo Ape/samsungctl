@@ -6,6 +6,10 @@ import time
 class Remote():
     """Object for remote control connection."""
 
+    class ConnectionClosed(Exception):
+        """Connection was closed."""
+        pass
+
     class AccessDenied(Exception):
         """Connection was denied."""
         pass
@@ -41,10 +45,15 @@ class Remote():
 
     def close(self):
         """Close the connection."""
-        self.connection.close()
+        if self.connection:
+            self.connection.close()
+            self.connection = None
 
     def control(self, key):
         """Send a control command."""
+        if not self.connection:
+            raise self.ConnectionClosed()
+
         payload = b"\x00\x00\x00" + self._serialize_string(str.encode(key))
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
@@ -64,6 +73,10 @@ class Remote():
         response_len = int.from_bytes(self.connection.recv(2),
                                       byteorder="little")
         response = self.connection.recv(response_len)
+
+        if len(response) == 0:
+            self.close()
+            raise self.ConnectionClosed()
 
         if response == b"\x64\x00\x01\x00":
             logging.debug("Access granted.")

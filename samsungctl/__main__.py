@@ -106,20 +106,20 @@ def main():
         return
 
     try:
-        remote = Remote(host, port, name, description, id, timeout)
+        with Remote(host, port, name, description, id, timeout) as remote:
+            if args.interactive:
+                interactive.run(remote)
+            else:
+                for key in args.key:
+                    remote.control(key)
+    except Remote.ConnectionClosed:
+        logging.error("Error: Connection closed!")
     except Remote.AccessDenied:
         logging.error("Error: Access denied!")
     except socket.timeout:
         logging.error("Error: Timed out!")
     except OSError as e:
         logging.error("Error: {}".format(e.strerror))
-    else:
-        with remote:
-            if args.interactive:
-                interactive.run(remote)
-            else:
-                for key in args.key:
-                    remote.control(key)
 
 if __name__ == "__main__":
     main()
