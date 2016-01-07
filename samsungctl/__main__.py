@@ -102,6 +102,7 @@ def main():
     try:
         with Remote(config) as remote:
             if args.interactive:
+                logging.getLogger().setLevel(logging.ERROR)
                 interactive.run(remote)
             else:
                 for key in args.key:
