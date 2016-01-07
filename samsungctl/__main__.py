@@ -114,7 +114,7 @@ def main():
     except socket.timeout:
         logging.error("Error: Timed out!")
     except OSError as e:
-        logging.error("Error: {}".format(e.strerror))
+        logging.error("Error: %s", e.strerror)
 
 if __name__ == "__main__":
     main()
