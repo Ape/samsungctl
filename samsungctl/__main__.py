@@ -102,6 +102,7 @@ def main():
     try:
         with Remote(config) as remote:
             if args.interactive:
+                logging.getLogger().setLevel(logging.ERROR)
                 interactive.run(remote)
             else:
                 for key in args.key:
@@ -113,7 +114,7 @@ def main():
     except socket.timeout:
         logging.error("Error: Timed out!")
     except OSError as e:
-        logging.error("Error: {}".format(e.strerror))
+        logging.error("Error: %s", e.strerror)
 
 if __name__ == "__main__":
     main()

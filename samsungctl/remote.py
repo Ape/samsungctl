@@ -48,6 +48,7 @@ class Remote():
         if self.connection:
             self.connection.close()
             self.connection = None
+            logging.debug("Connection closed.")
 
     def control(self, key):
         """Send a control command."""
@@ -57,7 +58,7 @@ class Remote():
         payload = b"\x00\x00\x00" + self._serialize_string(key)
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
-        logging.info("Sending control command.")
+        logging.info("Sending control command: %s", key)
         self.connection.send(packet)
         self._read_response()
         time.sleep(self._key_interval)
@@ -69,6 +70,9 @@ class Remote():
         tv_name_len = int.from_bytes(header[1:3],
                                      byteorder="little")
         tv_name = self.connection.recv(tv_name_len)
+
+        if first_time:
+            logging.debug("Connected to '%s'.", tv_name.decode())
 
         response_len = int.from_bytes(self.connection.recv(2),
                                       byteorder="little")
