@@ -70,6 +70,9 @@ class Remote():
                                      byteorder="little")
         tv_name = self.connection.recv(tv_name_len)
 
+        if first_time:
+            logging.debug("Connected to '{}'.".format(tv_name.decode()))
+
         response_len = int.from_bytes(self.connection.recv(2),
                                       byteorder="little")
         response = self.connection.recv(response_len)
