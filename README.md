@@ -25,7 +25,18 @@ It's possible to use the command line tool without installation:
 Command line usage
 ------------------
 
-Use `samsungctl --help` for information about the command line arguments:
+You can use `samsungctl` command to send keys to a TV:
+
+	$ samsungctl --host <host> [options] <key> [key ...]
+
+`host` is the hostname or IP address of the TV. `key` is a key code, e.g.
+`KEY_VOLDOWN`. See [Key codes](#key-codes).
+
+There is also an interactive mode (ncurses) for sending the key presses:
+
+	$ samsungctl --host <host> [options] --interactive
+
+Use `samsungctl --help` for more information about the command line arguments:
 
 ```
 usage: samsungctl [-h] [--version] [-v] [-q] [-i] [--host HOST] [--port PORT]
@@ -90,11 +101,9 @@ configuration items must be specified.
 
 The `Remote` object is very simple and you only need the `control(key)` method.
 The only parameter is a string naming the key to be sent (e.g.
-`"KEY_VOLDOWN"`). The list of accepted keys may vary depending on the TV model,
-but [interactive.py#L3](samsungctl/interactive.py#L3) (the second column) can
-be used as reference. You can call `control` multiple times using the same
-`Remote` object. The connection is automatically closed when exiting the `with`
-statement.
+`"KEY_VOLDOWN"`). See [Key codes](#key-codes). You can call `control` multiple
+times using the same `Remote` object. The connection is automatically closed
+when exiting the `with` statement.
 
 When something goes wrong you will receive an exception:
 
@@ -129,6 +138,50 @@ with samsungctl.Remote(config) as remote:
         remote.control("KEY_MENU")
         time.sleep(0.5)
 ```
+
+Key codes
+---------
+
+The list of accepted keys may vary depending on the TV model, but the following
+list has some common key codes and their descriptions.
+
+| Key code          | Description  |
+| ----------------- | ------------ |
+| KEY_POWEROFF      | Power off    |
+| KEY_UP            | Up           |
+| KEY_DOWN          | Down         |
+| KEY_LEFT          | Left         |
+| KEY_RIGHT         | Right        |
+| KEY_CHUP          | P Up         |
+| KEY_CHDOWN        | P Down       |
+| KEY_ENTER         | Enter        |
+| KEY_RETURN        | Return       |
+| KEY_CH_LIST       | Channel List |
+| KEY_MENU          | Menu         |
+| KEY_SOURCE        | Source       |
+| KEY_GUIDE         | Guide        |
+| KEY_TOOLS         | Tools        |
+| KEY_INFO          | Info         |
+| KEY_RED           | A / Red      |
+| KEY_GREEN         | B / Green    |
+| KEY_YELLOW        | C / Yellow   |
+| KEY_BLUE          | D / Blue     |
+| KEY_PANNEL_CHDOWN | 3D           |
+| KEY_VOLUP         | Volume Up    |
+| KEY_VOLDOWN       | Volume Down  |
+| KEY_MUTE          | Mute         |
+| KEY_0             | 0            |
+| KEY_1             | 1            |
+| KEY_2             | 2            |
+| KEY_3             | 3            |
+| KEY_4             | 4            |
+| KEY_5             | 5            |
+| KEY_6             | 6            |
+| KEY_7             | 7            |
+| KEY_8             | 8            |
+| KEY_9             | 9            |
+| KEY_DTV           | TV Source    |
+| KEY_HDMI          | HDMI Source  |
 
 References
 ----------
