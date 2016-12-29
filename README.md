@@ -111,12 +111,12 @@ when exiting the `with` statement.
 
 When something goes wrong you will receive an exception:
 
-| Exception                | Description                             |
-| ------------------------ | --------------------------------------- |
-| Remote.AccessDenied      | The TV does not allow you to send keys. |
-| Remote.ConnectionClosed  | The connection was closed.              |
-| Remote.UnhandledResponse | An unexpected response was received.    |
-| socket.timeout           | The connection timed out.               |
+| Exception         | Description                             |
+| ----------------- | --------------------------------------- |
+| AccessDenied      | The TV does not allow you to send keys. |
+| ConnectionClosed  | The connection was closed.              |
+| UnhandledResponse | An unexpected response was received.    |
+| socket.timeout    | The connection timed out.               |
 
 ### Example program
 
