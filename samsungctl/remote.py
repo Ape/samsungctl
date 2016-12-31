@@ -11,6 +11,12 @@ class Remote:
         else:
             raise exceptions.UnknownMethod()
 
+    def __enter__(self):
+        return self.remote.__enter__()
+
+    def __exit__(self, type, value, traceback):
+        self.remote.__exit__(type, value, traceback)
+
     def close(self):
         return self.remote.close()
 

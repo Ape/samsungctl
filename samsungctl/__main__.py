@@ -98,16 +98,15 @@ def main():
         return
 
     try:
-        remote = Remote(config)
+        with Remote(config) as remote:
+            for key in args.key:
+                remote.control(key)
 
-        for key in args.key:
-            remote.control(key)
-
-        if args.interactive:
-            logging.getLogger().setLevel(logging.ERROR)
-            interactive.run(remote)
-        elif len(args.key) == 0:
-            logging.warning("Warning: No keys specified.")
+            if args.interactive:
+                logging.getLogger().setLevel(logging.ERROR)
+                interactive.run(remote)
+            elif len(args.key) == 0:
+                logging.warning("Warning: No keys specified.")
     except exceptions.ConnectionClosed:
         logging.error("Error: Connection closed!")
     except exceptions.AccessDenied:
