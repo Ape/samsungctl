@@ -9,6 +9,7 @@ from . import __doc__ as doc
 from . import __title__ as title
 from . import __version__ as version
 from . import interactive
+from . import exceptions
 from . import Remote
 
 def _read_config():
@@ -16,7 +17,7 @@ def _read_config():
         "name": "samsungctl",
         "description": "PC",
         "id": "",
-        "port": 55000,
+        "method": "legacy",
         "timeout": 0,
     })
 
@@ -66,6 +67,7 @@ def main():
                         help="interactive control")
     parser.add_argument("--host", help="TV hostname or IP address")
     parser.add_argument("--port", type=int, help="TV port number (TCP)")
+    parser.add_argument("--method", help="Connection method (legacy or websocket)")
     parser.add_argument("--name", help="remote control name")
     parser.add_argument("--description", metavar="DESC",
                         help="remote control description")
@@ -105,10 +107,12 @@ def main():
                 interactive.run(remote)
             elif len(args.key) == 0:
                 logging.warning("Warning: No keys specified.")
-    except Remote.ConnectionClosed:
+    except exceptions.ConnectionClosed:
         logging.error("Error: Connection closed!")
-    except Remote.AccessDenied:
+    except exceptions.AccessDenied:
         logging.error("Error: Access denied!")
+    except exceptions.UnknownMethod:
+        logging.error("Error: Unknown method '{}'".format(config["method"]))
     except socket.timeout:
         logging.error("Error: Timed out!")
     except OSError as e:
