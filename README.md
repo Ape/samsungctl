@@ -102,6 +102,7 @@ configuration items must be specified.
 | description | string | Remote controller description.              |
 | id          | string | Additional remote controller ID.            |
 | timeout     | int    | Timeout in seconds. `0` means no timeout.   |
+| mac         | string | MAC address of remote (Dummy values work)   |
 
 The `Remote` object is very simple and you only need the `control(key)` method.
 The only parameter is a string naming the key to be sent (e.g.
@@ -136,6 +137,7 @@ config = {
     "port": 55000,
     "method": "legacy",
     "timeout": 0,
+    "mac": "00-AB-11-11-11-11"
 }
 
 with samsungctl.Remote(config) as remote:
