@@ -22,6 +22,7 @@ class RemoteLegacy():
 
         payload = b"\x64\x00" \
                   + self._serialize_string(config["description"]) \
+                  + self._serialize_string(config["mac"]) \
                   + self._serialize_string(config["id"]) \
                   + self._serialize_string(config["name"])
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
