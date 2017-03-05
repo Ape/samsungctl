@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import socket
+import errno
 
 from . import __doc__ as doc
 from . import __title__ as title
@@ -32,10 +33,14 @@ def _read_config():
     directories.append("/etc")
 
     for directory in directories:
+        path = os.path.join(directory, "samsungctl.conf")
         try:
-            config_file = open(os.path.join(directory, "samsungctl.conf"))
-        except FileNotFoundError:
-            continue
+            config_file = open(path)
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                continue
+            else:
+                raise
         else:
             file_loaded = True
             break
