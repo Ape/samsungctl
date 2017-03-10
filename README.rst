@@ -10,6 +10,7 @@ Dependencies
 ============
 
 - Python 3
+- ``appdirs``
 - ``websocket-client`` (optional, for 2016+ TVs)
 - ``curses`` (optional, for the interactive mode)
 
