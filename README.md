@@ -9,6 +9,7 @@ Dependencies
 
 - `Python 3`
 - `websocket-client` (optional, for 2016+ TVs)
+- `curses` (optional, for the interactive mode)
 
 Installation
 ------------
