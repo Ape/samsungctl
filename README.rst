@@ -84,8 +84,9 @@ arguments:
     E.g. samsungctl --host 192.168.0.10 --name myremote KEY_VOLDOWN
 
 The settings can be loaded from a configuration file. The file is searched from
-``$XDG_CONFIG_HOME/samsungctl.conf``, ``~/.config/samsungctl.conf``, and
-``/etc/samsungctl.conf`` in this order. A simple default configuration is
+a user specific path (usually ``~/.config/samsungctl.conf``) and if that is not
+found then from a system-wide path (usually
+``/etc/xdg/samsungctl/samsungctl.conf``). A simple default configuration is
 bundled with the source as `samsungctl.conf <samsungctl.conf>`_.
 
 Library usage
