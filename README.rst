@@ -58,8 +58,8 @@ arguments:
 ::
 
     usage: samsungctl [-h] [--version] [-v] [-q] [-i] [--host HOST] [--port PORT]
-                      [--name NAME] [--description DESC] [--id ID]
-                      [--timeout TIMEOUT]
+                      [--method METHOD] [--name NAME] [--description DESC]
+                      [--id ID] [--timeout TIMEOUT]
                       [key [key ...]]
 
     Remote control Samsung televisions via TCP/IP connection
