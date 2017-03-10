@@ -18,6 +18,10 @@ setuptools.setup(
     },
     packages=["samsungctl"],
     install_requires=[],
+    extras_require={
+        "websocket": ["websocket-client"],
+        "interactive_ui": ["curses"],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
