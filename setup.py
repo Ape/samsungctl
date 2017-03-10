@@ -12,7 +12,7 @@ setuptools.setup(
     author=samsungctl.__author__,
     author_email=samsungctl.__author_email__,
     license=samsungctl.__license__,
-    long_description=open("README.md").read(),
+    long_description=open("README.rst").read(),
     entry_points={
         "console_scripts": ["samsungctl=samsungctl.__main__:main"]
     },
