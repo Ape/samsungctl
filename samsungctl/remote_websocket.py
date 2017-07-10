@@ -56,7 +56,7 @@ class RemoteWebsocket():
         self.connection.send(payload)
         time.sleep(self._key_interval)
 
-    _key_interval = 1.0
+    _key_interval = 0.5
 
     def _read_response(self):
         response = self.connection.recv()
