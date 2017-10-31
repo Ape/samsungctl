@@ -18,9 +18,8 @@ class RemoteWebsocket():
         URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
         """Make a new connection."""
-        self.connection = websocket.WebSocket()
-        self.connection.connect(URL_FORMAT.format(config["host"], config["port"],
-                                                  self._serialize_string(config["name"])))
+        self.connection = websocket.create_connection(URL_FORMAT.format(config["host"], config["port"],
+                                                  self._serialize_string(config["name"])), config["timeout"])
 
         self._read_response()
 
