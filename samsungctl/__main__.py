@@ -4,11 +4,11 @@ import json
 import logging
 import os
 import socket
+import errno
 
 from . import __doc__ as doc
 from . import __title__ as title
 from . import __version__ as version
-from . import interactive
 from . import exceptions
 from . import Remote
 
@@ -32,10 +32,14 @@ def _read_config():
     directories.append("/etc")
 
     for directory in directories:
+        path = os.path.join(directory, "samsungctl.conf")
         try:
-            config_file = open(os.path.join(directory, "samsungctl.conf"))
-        except FileNotFoundError:
-            continue
+            config_file = open(path)
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                continue
+            else:
+                raise
         else:
             file_loaded = True
             break
@@ -104,6 +108,7 @@ def main():
 
             if args.interactive:
                 logging.getLogger().setLevel(logging.ERROR)
+                from . import interactive
                 interactive.run(remote)
             elif len(args.key) == 0:
                 logging.warning("Warning: No keys specified.")
