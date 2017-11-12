@@ -15,6 +15,9 @@ class RemoteWebsocket():
         if not config["port"]:
             config["port"] = 8001
 
+        if config["timeout"] == 0:
+            config["timeout"] = None
+
         URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
         """Make a new connection."""
