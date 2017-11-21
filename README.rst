@@ -120,6 +120,43 @@ id           string  Additional remote controller ID.
 timeout      int     Timeout in seconds. ``0`` means no timeout.
 ===========  ======  ===========================================
 
+
+The config should be setup as follows:
+Find your Tv series from the model number: 
+
+ex: UN65MU9000 is a M series, It should be whatever the 5th letter is.
+
+If you have a series C, D, E, or F (2013 or before) you config should look like this:
+
+.. code-block:: python
+
+    config = {
+            "name": "samsungctl",
+            "description": "PC",
+            "id": "",
+            "host": "192.168.0.10",
+            "port": 55000,
+            "method": "legacy",
+            "timeout": 0,
+        }
+    
+If you have a series H or J (2014-2015) your TV uses an encrypted communication and is not currently supported
+
+If you have a series K, M, or Qled (2016 or later) you config should look like this:
+
+.. code-block:: python
+
+    config = {
+            "name": "samsungctl",
+            "description": "PC",
+            "id": "",
+            "host": "192.168.0.10",
+            "port": 8001,
+            "method": "websocket",
+            "timeout": 0,
+        }
+    
+
 The ``Remote`` object is very simple and you only need the ``control(key)``
 method. The only parameter is a string naming the key to be sent (e.g.
 ``KEY_VOLDOWN``). See `Key codes`_. You can call ``control`` multiple times
