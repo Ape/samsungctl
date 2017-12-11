@@ -208,6 +208,7 @@ KEY_8              8
 KEY_9              9
 KEY_DTV            TV Source
 KEY_HDMI           HDMI Source
+KEY_CONTENTS       SmartHub
 =================  ============
 
 Please note that some codes are different on the 2016+ TVs. For example,
