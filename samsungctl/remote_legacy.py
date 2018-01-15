@@ -58,6 +58,18 @@ class RemoteLegacy():
 
     _key_interval = 0.2
 
+    def is_tv_on(self):
+        try:
+            # Send an empty key to see if we are still connected
+            self.control('KEY')
+        except (exceptions.UnhandledResponse,
+                exceptions.AccessDenied, BrokenPipeError):
+            # We got a response so it's on.
+            # BrokenPipe can occur when the commands is sent to fast
+            return True
+        except (exceptions.ConnectionClosed, OSError):
+            return False
+
     def _read_response(self, first_time=False):
         header = self.connection.recv(3)
         tv_name_len = int.from_bytes(header[1:3],

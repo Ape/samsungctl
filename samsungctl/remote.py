@@ -22,3 +22,6 @@ class Remote:
 
     def control(self, key):
         return self.remote.control(key)
+
+    def is_tv_on(self):
+        return self.remote.is_tv_on()
