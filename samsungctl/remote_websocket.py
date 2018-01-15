@@ -6,6 +6,10 @@ import time
 
 from . import exceptions
 
+
+URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
+
+
 class RemoteWebsocket():
     """Object for remote control connection."""
 
@@ -15,11 +19,13 @@ class RemoteWebsocket():
         if not config["port"]:
             config["port"] = 8001
 
-        URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
+        if config["timeout"] == 0:
+            config["timeout"] = None
 
-        """Make a new connection."""
-        self.connection = websocket.create_connection(URL_FORMAT.format(config["host"], config["port"],
-                                                  self._serialize_string(config["name"])), config["timeout"])
+        url = URL_FORMAT.format(config["host"], config["port"],
+                                self._serialize_string(config["name"]))
+
+        self.connection = websocket.create_connection(url, config["timeout"])
 
         self._read_response()
 
