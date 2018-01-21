@@ -25,8 +25,6 @@ class RemoteWebsocket():
             config["timeout"] = None
 
         self._config = config
-
-        URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
         url = URL_FORMAT.format(config["host"], config["port"],
                                 self._serialize_string(config["name"]))
 
@@ -69,8 +67,8 @@ class RemoteWebsocket():
     _key_interval = 1.0
 
     def is_tv_on(self):
-        url = "http://{}:{}/api/v2/"
-        url = url.format(self._config['host'], self._config['port'])
+        base_url = "http://{}:{}/api/v2/"
+        url = base_url.format(self._config['host'], self._config['port'])
         try:
             res = requests.get(url, timeout=5)
         except (requests.exceptions.Timeout,
