@@ -12,6 +12,7 @@ from . import __version__ as version
 from . import exceptions
 from . import Remote
 
+
 def _read_config():
     config = collections.defaultdict(lambda: None, {
         "name": "samsungctl",
@@ -51,16 +52,19 @@ def _read_config():
         try:
             config_json = json.load(config_file)
         except ValueError as e:
-            logging.warning("Warning: Could not parse the configuration file.\n  %s", e)
+            messsage = "Warning: Could not parse the configuration file.\n  %s"
+            logging.warning(message, e)
             return config
 
         config.update(config_json)
 
     return config
 
+
 def main():
+    epilog = "E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN"
     parser = argparse.ArgumentParser(prog=title, description=doc,
-                                     epilog="E.g. %(prog)s --host 192.168.0.10 --name myremote KEY_VOLDOWN")
+                                     epilog=epilog)
     parser.add_argument("--version", action="version",
                         version="%(prog)s {0}".format(version))
     parser.add_argument("-v", "--verbose", action="count",
@@ -71,7 +75,8 @@ def main():
                         help="interactive control")
     parser.add_argument("--host", help="TV hostname or IP address")
     parser.add_argument("--port", type=int, help="TV port number (TCP)")
-    parser.add_argument("--method", help="Connection method (legacy or websocket)")
+    parser.add_argument("--method",
+                        help="Connection method (legacy or websocket)")
     parser.add_argument("--name", help="remote control name")
     parser.add_argument("--description", metavar="DESC",
                         help="remote control description")
@@ -122,6 +127,7 @@ def main():
         logging.error("Error: Timed out!")
     except OSError as e:
         logging.error("Error: %s", e.strerror)
+
 
 if __name__ == "__main__":
     main()

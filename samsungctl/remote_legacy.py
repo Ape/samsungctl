@@ -5,6 +5,7 @@ import time
 
 from . import exceptions
 
+
 class RemoteLegacy():
     """Object for remote control connection."""
 
@@ -106,7 +107,7 @@ class RemoteLegacy():
         raise exceptions.UnhandledResponse(response)
 
     @staticmethod
-    def _serialize_string(string, raw = False):
+    def _serialize_string(string, raw=False):
         if isinstance(string, str):
             string = str.encode(string)
 

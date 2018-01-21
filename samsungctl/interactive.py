@@ -1,5 +1,6 @@
 import curses
 
+
 _mappings = [
     ["p",             "KEY_POWEROFF",      "P",         "Power off"],
     ["KEY_UP",        "KEY_UP",            "Up",        "Up"],
@@ -10,6 +11,7 @@ _mappings = [
     ["KEY_NPAGE",     "KEY_CHDOWN",        "Page Down", "P Down"],
     ["\n",            "KEY_ENTER",         "Enter",     "Enter"],
     ["KEY_BACKSPACE", "KEY_RETURN",        "Backspace", "Return"],
+    ["q",             "KEY_EXIT",          "Q",         "Exit"],
     ["h",             "KEY_CONTENTS",      "H",         "Smart Hub"],
     ["l",             "KEY_CH_LIST",       "L",         "Channel List"],
     ["m",             "KEY_MENU",          "M",         "Menu"],
@@ -39,9 +41,11 @@ _mappings = [
     ["KEY_F(2)",      "KEY_HDMI",          "F2",        "HDMI Source"],
 ]
 
+
 def run(remote):
     """Run interactive remote control application."""
     curses.wrapper(_control, remote)
+
 
 def _control(stdscr, remote):
     height, width = stdscr.getmaxyx()

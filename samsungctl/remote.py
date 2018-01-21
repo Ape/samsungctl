@@ -2,6 +2,7 @@ from . import exceptions
 from .remote_legacy import RemoteLegacy
 from .remote_websocket import RemoteWebsocket
 
+
 class Remote:
     def __init__(self, config):
         if config["method"] == "legacy":
