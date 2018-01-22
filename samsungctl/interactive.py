@@ -11,7 +11,7 @@ _mappings = [
     ["KEY_NPAGE",     "KEY_CHDOWN",        "Page Down", "P Down"],
     ["\n",            "KEY_ENTER",         "Enter",     "Enter"],
     ["KEY_BACKSPACE", "KEY_RETURN",        "Backspace", "Return"],
-    ["q",             "KEY_EXIT",          "Q",         "Exit"],
+    ["e",             "KEY_EXIT",          "E",         "Exit"],
     ["h",             "KEY_CONTENTS",      "H",         "Smart Hub"],
     ["l",             "KEY_CH_LIST",       "L",         "Channel List"],
     ["m",             "KEY_MENU",          "M",         "Menu"],
