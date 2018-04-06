@@ -3,7 +3,7 @@ from .remote_legacy import RemoteLegacy
 from .remote_websocket import RemoteWebsocket
 
 
-class Remote:
+class Remote(object):
     def __init__(self, config):
         if config["method"] == "legacy":
             self.remote = RemoteLegacy(config)
