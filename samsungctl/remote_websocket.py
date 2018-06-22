@@ -1,8 +1,9 @@
 import base64
 import json
 import logging
-import socket
+import threading
 import time
+import select
 
 from . import exceptions
 
@@ -26,8 +27,11 @@ class RemoteWebsocket():
                                 self._serialize_string(config["name"]))
 
         self.connection = websocket.create_connection(url, config["timeout"])
-
         self._read_response()
+
+        ## Keep long-lived connection alive by spawning a thread
+        thread = threading.Thread(target=self._keep_alive, daemon=True)
+        thread.start()
 
     def __enter__(self):
         return self
@@ -72,6 +76,18 @@ class RemoteWebsocket():
             raise exceptions.UnhandledResponse(response)
 
         logging.debug("Access granted.")
+
+    def _keep_alive(self):
+        while True:
+            r, w, e = select.select((self.connection.sock, ), (), ())
+            if not (self.connection and self.connection.connected):
+                # stop if connection was already closed
+                # while blocking in select function above
+                logging.debug("keep alive thread terminating.")
+                return
+            if r:
+                _ = self.connection.recv()
+                logging.debug("data received.")
 
     @staticmethod
     def _serialize_string(string):
