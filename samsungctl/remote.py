@@ -9,6 +9,8 @@ class Remote:
             self.remote = RemoteLegacy(config)
         elif config["method"] == "websocket":
             self.remote = RemoteWebsocket(config)
+        elif config["method"] == "websocketssl":
+            self.remote = RemoteWebsocket(config)
         else:
             raise exceptions.UnknownMethod()
 
