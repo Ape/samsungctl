@@ -37,10 +37,40 @@ _mappings = [
     ["7",             "KEY_7",             "7",         "7"],
     ["8",             "KEY_8",             "8",         "8"],
     ["9",             "KEY_9",             "9",         "9"],
-    ["KEY_F(1)",      "KEY_DTV",           "F1",        "TV Source"],
+    ["KEY_F(1)",      "KEY_TV",            "F1",        "TV Source"],
     ["KEY_F(2)",      "KEY_HDMI",          "F2",        "HDMI Source"],
+    ["KEY_F(3)",      "KEY_DVI",           "F3",        "DVI Source"],
+    ["KEY_F(4)",      "KEY_DVR",           "F4",        "DVR Source"],
+    ["KEY_F(5)",      "KEY_DTV",           "F5",        "Digital TV Source"],
+    ["KEY_F(6)",      "KEY_ANTENA",        "F6",        "Analog TV Source"],
+    ["KEY_F(7)",      "KEY_FM_RADIO",      "F7",        "FM Radio Source"],
+    ["KEY_F(9)",      "KEY_HDMI1",         "F9",        "HDMI 1 Source"],
+    ["KEY_F(10)",     "KEY_HDMI2",         "F10",       "HDMI 2 Source"],
+    ["KEY_F(11)",     "KEY_HDMI3",         "F11",       "HDMI 3 Source"],
+    ["KEY_F(12)",     "KEY_HDMI4",         "F12",       "HDMI 4 Source"],
+    ["KEY_F(25)",     "KEY_AV1",           "CTRL+F1",   "AV 1 Source"],
+    ["KEY_F(26)",     "KEY_AV2",           "CTRL+F2",   "AV 2 Source"],
+    ["KEY_F(27)",     "KEY_AV3",           "CTRL+F3",   "AV 3 Source"],
+    ["KEY_F(29)",     "KEY_SVIDEO1",       "CTRL+F5",   "S Video 1 Source"],
+    ["KEY_F(30)",     "KEY_SVIDEO2",       "CTRL+F6",   "S Video 2 Source"],
+    ["KEY_F(31)",     "KEY_SVIDEO3",       "CTRL+F7",   "S Video 3 Source"],
+    ["KEY_F(33)",     "KEY_COMPONENT1",    "CTRL+F9",   "Component 1 Source"],
+    ["KEY_F(34)",     "KEY_COMPONENT2",    "CTRL+F10",  "Component 2 Source"],
 ]
-
+'''
+ctrl + functions
+f1 25
+f2 26
+f3 27
+f4 28
+f5 29
+f6 30
+f7 31
+f8 32
+f9 33
+f10 34
+f11 35 
+f12 36'''
 
 def run(remote):
     """Run interactive remote control application."""
