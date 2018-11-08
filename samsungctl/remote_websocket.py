@@ -23,14 +23,14 @@ class RemoteWebsocket():
         if config["timeout"] == 0:
             config["timeout"] = None
 
-
-        if config["method"] == "websocketssl":
+        if config["port"] == 8002:
             url = SSL_URL_FORMAT.format(config["host"], config["port"],
-                                    self._serialize_string(config["name"]))
+                                        self._serialize_string(config["name"]))
             if os.path.isfile(self.token_file):
                 with open(self.token_file, "r") as token_file:
                     url += "&token=" + token_file.readline()
             self.connection = websocket.create_connection(url, config["timeout"], sslopt={"cert_reqs": ssl.CERT_NONE})
+
         else:
             url = URL_FORMAT.format(config["host"], config["port"],
                                     self._serialize_string(config["name"]))
