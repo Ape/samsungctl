@@ -5,11 +5,12 @@ import socket
 from xml.etree import ElementTree
 import requests
 import threading
+import json
 
 
 MCAST_GRP = "239.255.255.250"
 
-request = (
+REQUEST = (
     "M-SEARCH * HTTP/1.1\r\n"
     "HOST: 239.255.255.250:1900\r\n"
     "MAN: \"ssdp:discover\"\r\n"
@@ -19,7 +20,7 @@ request = (
 )
 
 
-def discover(timeout):
+def find(timeout):
     '''
 
     Received 6/11/2018 at 9:38:51 AM (828)
@@ -39,14 +40,13 @@ def discover(timeout):
     else:
         socket.setdefaulttimeout(3)
 
-    events = []
+    ips = []
     found = []
+    found_event = threading.Event()
 
-    for address_type, sock_addr in socket.getaddrinfo('', None)[-1:1]:
-        if address_type != socket.AF_INET:
-            continue
+    threads = []
 
-        local_address = sock_addr[0]
+    def do(lcl_address):
 
         sock = socket.socket(
             socket.AF_INET,
@@ -55,53 +55,69 @@ def discover(timeout):
         )
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 3)
-        sock.bind((local_address, 0))
+        sock.bind((lcl_address, 0))
 
-        while True:
-            for _ in xrange(5):
-                sock.sendto(request, ("239.255.255.250", 1900))
-            try:
-                while True:
-                    data, addr = sock.recvfrom(1024)
-                    addr, port = addr
+        for _ in xrange(5):
+            sock.sendto(REQUEST, ("239.255.255.250", 1900))
+        try:
+            while True:
+                data, addr = sock.recvfrom(1024)
+                addr, port = addr
+                if addr in ips:
+                    continue
 
-                    for line in data.split('\n'):
-                        line = line.strip().split(': ')
-                        if len(line) < 2:
-                            continue
+                for line in data.split('\n'):
+                    line = line.strip().split(': ')
+                    if len(line) < 2:
+                        continue
 
-                        if line[0].lower() == 'location':
-                            location = line[1].strip()
+                    if line[0].lower() == 'location':
+                        location = line[1].strip()
 
-                            events += [threading.Event()]
+                        try:
+                            device = _read_xml(location)
+                            device['ip'] = addr
+                            ips.append(addr)
+                            found.append(device)
+                            found_event.set()
+                        except:
+                            pass
 
-                            def do(a, p, l, e):
-                                try:
-                                    d = _read_xml(l)
-                                    d['ip'] = a
-                                    if d and d not in found:
-                                        found.append(d)
-                                except:
-                                    pass
+        except socket.timeout:
+            pass
 
-                                e.set()
+        try:
+            sock.close()
+        except socket.error:
+            pass
 
-                            t = threading.Thread(
-                                target=do,
-                                args=(addr, port, location, events[-1])
-                            )
-                            t.daemon = True
-                            t.start()
+        threads.remove(threading.current_thread())
+        found_event.set()
 
-            except socket.timeout:
-                for evt in events:
-                    evt.wait()
+    for local_address in _interface_addresses():
+        t = threading.Thread(
+            target=do,
+            args=(local_address,)
+        )
+        t.daemon = True
+        threads += [t]
+        t.start()
 
-                del events[:]
+    while threads:
+        found_event.wait()
+        while found:
+            yield found.pop(0)
 
-                break
+        found_event.clear()
 
-    return found
+    while found:
+        yield found.pop(0)
+
+
+def _interface_addresses(family=socket.AF_INET):
+    for fam, a, b, c, sock_addr in socket.getaddrinfo('', None):
+        if family == fam:
+            yield sock_addr[0]
 
 
 def _parse_model(model):
@@ -222,15 +238,14 @@ def _read_xml(url):
     response = requests.get(url)
     xml = ElementTree.fromstring(response.content)
 
-    if '}' in xml[0].tag:
-        schema = xml[0].tag[:xml[0].tag.find('}') + 1]
-    else:
-        schema = ''
+    xmlns_sec = '{http://www.sec.co.kr/dlna}'
+    xmlns = '{urn:schemas-upnp-org:device-1-0}'
 
-    device = xml.find(schema + 'device')
-    friendly_name = device.find(schema + 'friendlyName')
-    serial_number = device.find(schema + 'serialNumber')
-    model_name = device.find(schema + 'modelName')
+    device = xml.find(xmlns + 'device')
+    friendly_name = device.find(xmlns + 'friendlyName')
+    serial_number = device.find(xmlns + 'serialNumber')
+    model_name = device.find(xmlns + 'modelName')
+    device_id = device.find(xmlns_sec + 'deviceID')
 
     if friendly_name is not None:
         friendly_name = friendly_name.text
@@ -247,10 +262,20 @@ def _read_xml(url):
     else:
         model_name = ''
 
+    if device_id is not None:
+        device_id = device_id.text
+    else:
+        device_id = serial_number
+
     if '[TV]' not in friendly_name or not model_name:
         return None
 
     model_data = _parse_model(model_name)
     model_data['serial_number'] = serial_number
+    model_data['device_id'] = device_id
     return model_data
 
+
+if __name__ == '__main__':
+    for device in find(8):
+        print json.dumps(device, indent=4)
