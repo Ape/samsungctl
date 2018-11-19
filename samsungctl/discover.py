@@ -20,7 +20,7 @@ REQUEST = (
 )
 
 
-def find(timeout):
+def discover(timeout):
     '''
 
     Received 6/11/2018 at 9:38:51 AM (828)
