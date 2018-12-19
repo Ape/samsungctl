@@ -1,9 +1,7 @@
 import base64
 import json
 import logging
-import socket
 import threading
-import time
 import ssl
 import os
 from . import exceptions
@@ -59,15 +57,47 @@ class RemoteWebsocket():
         ) + token
 
         self.config = config
-        self.connection = websocket.create_connection(
-            url,
-            config["timeout"], sslopt={"cert_reqs": ssl.CERT_NONE}
-        )
+        self.connection = None
+
+        def do():
+            ws = websocket.WebSocketApp(
+                url,
+                on_close=self.on_close,
+                on_open=self.on_open,
+                on_error=self.on_error,
+                on_message=self.on_message
+            )
+            ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+
+        self.open_event = threading.Event()
         self.auth_event = threading.Event()
-        self._read_response()
+        self.receive_event = threading.Event()
+        self.receive_lock = threading.Lock()
+        self.close_event = threading.Event()
+
+        threading.Thread(target=do).start()
+
+        self.open_event.wait(3.0)
+        if not self.open_event.isSet():
+            raise RuntimeError('Connection Failure')
+
+        self.auth_event.wait(3.0)
         if not self.auth_event.isSet():
             self.close()
             raise RuntimeError('Auth Failure')
+
+    def on_open(self, ws):
+        logging.debug('Websocket Connection Opened')
+        self.connection = ws
+        self.open_event.set()
+
+    def on_close(self, _):
+        logging.debug('Websocket Connection Closed')
+        self.connection = None
+        self.close_event.set()
+
+    def on_error(self, _, error):
+        logging.error(error)
 
     def __enter__(self):
         return self
@@ -78,46 +108,59 @@ class RemoteWebsocket():
     def close(self):
         """Close the connection."""
         if self.connection:
-            self.connection.close()
-            self.connection = None
-            logging.debug("Connection closed.")
+            with self.receive_lock:
+                self.connection.close()
+                self.close_event.wait(2.0)
+
+                if not self.close_event.isSet():
+                    raise RuntimeError('Close Failure')
 
     def control(self, key):
         """Send a control command."""
         if not self.connection:
             raise exceptions.ConnectionClosed()
 
-        payload = json.dumps({
-            "method": "ms.remote.control",
-            "params": {
-                "Cmd": "Click",
-                "DataOfCmd": key,
-                "Option": "false",
-                "TypeOfRemote": "SendRemoteKey"
-            }
-        })
+        with self.receive_lock:
 
-        logging.info("Sending control command: %s", key)
-        self.connection.send(payload)
-        self._read_response()
-        time.sleep(self._key_interval)
+            payload = json.dumps({
+                "method": "ms.remote.control",
+                "params": {
+                    "Cmd": "Click",
+                    "DataOfCmd": key,
+                    "Option": "false",
+                    "TypeOfRemote": "SendRemoteKey"
+                }
+            })
+
+            logging.info("Sending control command: %s", key)
+            self.receive_event.clear()
+            self.connection.send(payload)
+            self.receive_event.wait(2.0)
+
+            if not self.receive_event.isSet():
+                raise RuntimeError('Receive Failure')
 
     _key_interval = 0.5
 
-    def _read_response(self):
-        response = self.connection.recv()
-        response = json.loads(response)
-        logging.debug(response)
+    def on_message(self, _, message):
+        response = json.loads(message)
+        logging.debug(message)
 
         if response["event"] == "ms.channel.connect":
             if 'data' in response and 'token' in response["data"]:
-                with open(self.token_file, "a") as token_file:
-                    token_file.write(
-                        self.config['host'] + ':' + response['data'][
-                            "token"] + '\n'
-                    )
+                token = self.config['host'] + ':' + response['data']["token"]
+                with open(self.token_file, "r") as token_file:
+                    token_data = token_file.read()
+
+                if token not in token_data:
+                    with open(self.token_file, "a") as token_file:
+                        token_file.write(token + '\n')
+
                     logging.debug("Access granted.")
                     self.auth_event.set()
+
+        else:
+            self.receive_event.set()
 
     @staticmethod
     def _serialize_string(string):
