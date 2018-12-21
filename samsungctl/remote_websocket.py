@@ -6,6 +6,8 @@ import ssl
 import os
 from . import exceptions
 
+logger = logging.getLogger('samsungctl')
+
 
 URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
@@ -38,7 +40,9 @@ class RemoteWebsocket():
 
         for line in tokens.split('\n'):
             if line.startswith(config["host"]):
-                token = "&token=" + line.replace(config["host"] + ':', '')
+                token = line.replace(config["host"] + ':', '')
+                logger.debug('using saved token: ' + token)
+                token = "&token=" + token
                 break
         else:
             token = ''
@@ -76,27 +80,27 @@ class RemoteWebsocket():
 
         threading.Thread(target=do).start()
 
-        self.open_event.wait(3.0)
+        self.open_event.wait(5.0)
         if not self.open_event.isSet():
             raise RuntimeError('Connection Failure')
 
-        self.auth_event.wait(3.0)
+        self.auth_event.wait(30.0)
         if not self.auth_event.isSet():
             self.close()
             raise RuntimeError('Auth Failure')
 
     def on_open(self, ws):
-        logging.debug('Websocket Connection Opened')
+        logger.debug('Websocket Connection Opened')
         self.connection = ws
         self.open_event.set()
 
     def on_close(self, _):
-        logging.debug('Websocket Connection Closed')
+        logger.debug('Websocket Connection Closed')
         self.connection = None
         self.close_event.set()
 
     def on_error(self, _, error):
-        logging.error(error)
+        logger.error(error)
 
     def __enter__(self):
         return self
@@ -109,7 +113,7 @@ class RemoteWebsocket():
         if self.connection:
             with self.receive_lock:
                 self.connection.close()
-                self.close_event.wait(2.0)
+                self.close_event.wait(5.0)
 
                 if not self.close_event.isSet():
                     raise RuntimeError('Close Failure')
@@ -131,19 +135,19 @@ class RemoteWebsocket():
                 }
             })
 
-            logging.info("Sending control command: %s", key)
+            logger.info("Sending control command: " + key)
             self.receive_event.clear()
             self.connection.send(payload)
-            self.receive_event.wait(2.0)
+            self.receive_event.wait(5.0)
 
             if not self.receive_event.isSet():
-                raise RuntimeError('Receive Failure')
+                logger.debug('Receive timer timed out')
 
     _key_interval = 0.5
 
     def on_message(self, _, message):
         response = json.loads(message)
-        logging.debug(message)
+        logger.debug('incoming message: ' + message)
 
         if response["event"] == "ms.channel.connect":
             if 'data' in response and 'token' in response["data"]:
@@ -152,10 +156,11 @@ class RemoteWebsocket():
                     token_data = token_file.read()
 
                 if token not in token_data:
+                    logger.debug('new token data: ' + token)
                     with open(self.token_file, "a") as token_file:
                         token_file.write(token + '\n')
 
-                    logging.debug("Access granted.")
+                        logger.debug("Access granted.")
                     self.auth_event.set()
 
         else:
