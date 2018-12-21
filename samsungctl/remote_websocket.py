@@ -19,17 +19,16 @@ class RemoteWebsocket():
         import sys
 
         if sys.platform.startswith('win'):
-            path = os.path.join('%appdata%', 'samsungctl')
+            path = os.path.join(os.path.expandvars('%appdata%'), 'samsungctl')
 
         else:
-            path = os.path.join('~', '.samsungctl')
-
-        path = os.path.expandvars(path)
+            path = os.path.join(os.path.expanduser('~'), '.samsungctl')
 
         if not os.path.exists(path):
             os.mkdir(path)
 
-        token_file = path + "/token.txt"
+        token_file = os.path.join(path, "token.txt")
+
         if not os.path.exists(token_file):
             with open(token_file, 'w') as f:
                 f.write('')
