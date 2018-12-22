@@ -17,12 +17,10 @@ class RemoteWebsocket():
     """Object for remote control connection."""
 
     def __init__(self, config):
-        import websocket
         import sys
 
         if sys.platform.startswith('win'):
             path = os.path.join(os.path.expandvars('%appdata%'), 'samsungctl')
-
         else:
             path = os.path.join(os.path.expanduser('~'), '.samsungctl')
 
@@ -35,60 +33,91 @@ class RemoteWebsocket():
             with open(token_file, 'w') as f:
                 f.write('')
 
-        with open(token_file, 'r') as f:
-            tokens = f.read()
-
-        token = ''
-        all_tokens = []
-
-        for line in tokens.split('\n'):
-            if not line.strip():
-                continue
-            if line.startswith(config["host"]):
-                token = line
-            else:
-                all_tokens += [line]
-
-        if token:
-            all_tokens += [token]
-            token = token.replace(config["host"] + ':', '')
-            token = "&token=" + token
-            logger.debug('using saved token: ' + token)
-
-        if all_tokens:
-            with open(token_file, 'w') as f:
-                f.write('\n'.join(all_tokens) + '\n')
-
         self.token_file = token_file
-
-        config['port'] = 8002
-        if config["timeout"] == 0:
-            config["timeout"] = None
-
-        url = SSL_URL_FORMAT.format(
-            config["host"],
-            config["port"],
-            self._serialize_string(config["name"])
-        ) + token
 
         self.config = config
         self.connection = None
-
-        def do():
-            ws = websocket.WebSocketApp(
-                url,
-                on_close=self.on_close,
-                on_open=self.on_open,
-                on_error=self.on_error,
-                on_message=self.on_message
-            )
-            ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
         self.open_event = threading.Event()
         self.auth_event = threading.Event()
         self.receive_event = threading.Event()
         self.receive_lock = threading.Lock()
         self.close_event = threading.Event()
+
+        self.open()
+
+    def on_open(self, ws):
+        logger.debug('Websocket Connection Opened')
+        self.connection = ws
+        self.open_event.set()
+
+    def open(self):
+        import websocket
+
+        def do():
+            token = ''
+            all_tokens = []
+
+            with open(self.token_file, 'r') as f:
+                tokens = f.read()
+
+            for line in tokens.split('\n'):
+                if not line.strip():
+                    continue
+                if line.startswith(self.config["host"]):
+                    token = line
+                else:
+                    all_tokens += [line]
+
+            if token:
+                all_tokens += [token]
+                token = token.replace(self.config["host"] + ':', '')
+                logger.debug('using saved token: ' + token)
+                token = "&token=" + token
+
+            if all_tokens:
+                with open(self.token_file, 'w') as f:
+                    f.write('\n'.join(all_tokens) + '\n')
+
+            with self.receive_lock:
+                if self.connection is not None:
+                    self.connection.close()
+
+                self.close_event.wait(1.0)
+                self.close_event.clear()
+
+                if token or self.config['port'] == 8002:
+                    self.config['port'] = 8002
+                    url = SSL_URL_FORMAT.format(
+                        self.config["host"],
+                        self.config["port"],
+                        self._serialize_string(self.config["name"])
+                    ) + token
+
+                else:
+                    self.config['port'] = 8001
+                    url = URL_FORMAT.format(
+                        self.config["host"],
+                        self.config["port"],
+                        self._serialize_string(self.config["name"])
+                    )
+
+                ws = websocket.WebSocketApp(
+                    url,
+                    on_close=self.on_close,
+                    on_open=self.on_open,
+                    on_error=self.on_error,
+                    on_message=self.on_message
+                )
+
+            if token or self.config['port'] == 8002:
+                ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+            else:
+                ws.run_forever()
+
+        self.open_event.clear()
+        self.auth_event.clear()
+        self.receive_event.clear()
 
         threading.Thread(target=do).start()
 
@@ -100,11 +129,6 @@ class RemoteWebsocket():
         if not self.auth_event.isSet():
             self.close()
             raise RuntimeError('Auth Failure')
-
-    def on_open(self, ws):
-        logger.debug('Websocket Connection Opened')
-        self.connection = ws
-        self.open_event.set()
 
     def on_close(self, _):
         logger.debug('Websocket Connection Closed')
@@ -150,10 +174,7 @@ class RemoteWebsocket():
             logger.info("Sending control command: " + key)
             self.receive_event.clear()
             self.connection.send(payload)
-            self.receive_event.wait(5.0)
-
-            if not self.receive_event.isSet():
-                logger.debug('Receive timer timed out')
+            self.receive_event.wait(0.35)
 
     _key_interval = 0.5
 
@@ -180,8 +201,16 @@ class RemoteWebsocket():
             logger.debug("Access granted.")
             self.auth_event.set()
 
-        else:
-            self.receive_event.set()
+        elif response['event'] == 'ms.channel.unauthorized':
+            if self.config['port'] == 8001:
+                logger.debug(
+                    "Websocket connection failed. Trying ssl connection"
+                )
+                self.config['port'] = 8002
+                self.open()
+            else:
+                self.close()
+                raise RuntimeError('Authentication denied')
 
     @staticmethod
     def _serialize_string(string):
