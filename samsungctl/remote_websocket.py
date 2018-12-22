@@ -38,14 +38,26 @@ class RemoteWebsocket():
         with open(token_file, 'r') as f:
             tokens = f.read()
 
+        token = ''
+        all_tokens = []
+
         for line in tokens.split('\n'):
+            if not line.strip():
+                continue
             if line.startswith(config["host"]):
-                token = line.replace(config["host"] + ':', '')
-                logger.debug('using saved token: ' + token)
-                token = "&token=" + token
-                break
-        else:
-            token = ''
+                token = line
+            else:
+                all_tokens += [line]
+
+        if token:
+            all_tokens += [token]
+            token = token.replace(config["host"] + ':', '')
+            token = "&token=" + token
+            logger.debug('using saved token: ' + token)
+
+        if all_tokens:
+            with open(token_file, 'w') as f:
+                f.write('\n'.join(all_tokens) + '\n')
 
         self.token_file = token_file
 
@@ -153,15 +165,20 @@ class RemoteWebsocket():
             if 'data' in response and 'token' in response["data"]:
                 token = self.config['host'] + ':' + response['data']["token"]
                 with open(self.token_file, "r") as token_file:
-                    token_data = token_file.read()
+                    token_data = token_file.read().split('\n')
 
-                if token not in token_data:
-                    logger.debug('new token data: ' + token)
-                    with open(self.token_file, "a") as token_file:
-                        token_file.write(token + '\n')
+                for line in token_data[:]:
+                    if self.config['host'] in line:
+                        token_data.remove(line)
 
-                        logger.debug("Access granted.")
-                    self.auth_event.set()
+                token_data += [token]
+
+                logger.debug('new token: ' + token)
+                with open(self.token_file, "w") as token_file:
+                    token_file.write('\n'.join(token_data) + '\n')
+
+                logger.debug("Access granted.")
+                self.auth_event.set()
 
         else:
             self.receive_event.set()
