@@ -177,8 +177,8 @@ class RemoteWebsocket():
                 with open(self.token_file, "w") as token_file:
                     token_file.write('\n'.join(token_data) + '\n')
 
-                logger.debug("Access granted.")
-                self.auth_event.set()
+            logger.debug("Access granted.")
+            self.auth_event.set()
 
         else:
             self.receive_event.set()
