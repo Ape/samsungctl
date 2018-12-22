@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from . import exceptions
 from .remote_legacy import RemoteLegacy
 from .remote_websocket import RemoteWebsocket

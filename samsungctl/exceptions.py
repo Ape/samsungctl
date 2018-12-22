@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class AccessDenied(Exception):
     """Connection was denied."""
     pass
