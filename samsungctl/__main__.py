@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
 import argparse
 import collections
 import json
@@ -6,11 +9,31 @@ import os
 import socket
 import errno
 
-from . import __doc__ as doc
-from . import __title__ as title
-from . import __version__ as version
-from . import exceptions
-from . import Remote
+
+try:
+    from . import __doc__ as doc
+    from . import __title__ as title
+    from . import __version__ as version
+    from . import exceptions
+    from . import Remote
+    from . import key_mappings
+
+except ValueError:
+    import sys
+    path = os.path.dirname(__file__)
+    if not path:
+        path = os.path.dirname(sys.argv[0])
+    if not path:
+        path = os.getcwd()
+
+    sys.path.insert(0, os.path.abspath(os.path.join(path, '..')))
+
+    from samsungctl import __doc__ as doc
+    from samsungctl import __title__ as title
+    from samsungctl import __version__ as version
+    from samsungctl import exceptions
+    from samsungctl import Remote
+    from samsungctl import key_mappings
 
 
 def _read_config():
@@ -52,13 +75,56 @@ def _read_config():
         try:
             config_json = json.load(config_file)
         except ValueError as e:
-            messsage = "Warning: Could not parse the configuration file.\n  %s"
+            message = "Warning: Could not parse the configuration file.\n  %s"
             logging.warning(message, e)
             return config
 
         config.update(config_json)
 
     return config
+
+
+def keys_help(keys):
+    import sys
+
+    key_groups = {}
+    max_len = 0
+
+    if not keys or keys == [None]:
+        keys = key_mappings.KEYS.values()
+
+    for key in keys:
+        if key is None:
+            continue
+
+        group = key.group
+        key = str(key)
+        if group not in key_groups:
+            key_groups[group] = []
+
+        if key not in key_groups[group]:
+            key_groups[group] += [key]
+            max_len = max(max_len, len(key) - 4)
+
+    print('Available keys')
+    print('=' * (max_len + 4))
+    print()
+    print('Note: Key support depends on TV model.')
+    print()
+
+    for group in sorted(list(key_groups.keys())):
+        print('    ' + group)
+        print('    ' + ('-' * max_len))
+        print('\n'.join(key_groups[group]))
+        print()
+    sys.exit(0)
+
+
+def get_key(key):
+    if key in key_mappings.KEYS:
+        return key_mappings.KEYS[key]
+    else:
+        logging.warning("Warning: Key {0} not found.".format(key))
 
 
 def main():
@@ -83,7 +149,9 @@ def main():
     parser.add_argument("--id", help="remote control id")
     parser.add_argument("--timeout", type=float,
                         help="socket timeout in seconds (0 = no timeout)")
-    parser.add_argument("key", nargs="*",
+    parser.add_argument("--key-help", action="store_true",
+                        help="print available keys. (key support depends on tv model)")
+    parser.add_argument("key", nargs="*", default=[], type=get_key,
                         help="keys to be sent (e.g. KEY_VOLDOWN)")
 
     args = parser.parse_args()
@@ -99,6 +167,9 @@ def main():
 
     logging.basicConfig(format="%(message)s", level=log_level)
 
+    if args.key_help:
+        keys_help(args.key)
+
     config = _read_config()
     config.update({k: v for k, v in vars(args).items() if v is not None})
 
@@ -109,7 +180,9 @@ def main():
     try:
         with Remote(config) as remote:
             for key in args.key:
-                remote.control(key)
+                if key is None:
+                    continue
+                key(remote)
 
             if args.interactive:
                 logging.getLogger().setLevel(logging.ERROR)

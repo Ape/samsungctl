@@ -1,10 +1,15 @@
+# -*- coding: utf-8 -*-
+
 import base64
 import json
 import logging
 import threading
 import ssl
 import os
+import sys
+import websocket
 from . import exceptions
+
 
 logger = logging.getLogger('samsungctl')
 
@@ -13,12 +18,10 @@ URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
 
-class RemoteWebsocket():
+class RemoteWebsocket(object):
     """Object for remote control connection."""
 
     def __init__(self, config):
-        import sys
-
         if sys.platform.startswith('win'):
             path = os.path.join(os.path.expandvars('%appdata%'), 'samsungctl')
         else:
@@ -52,8 +55,6 @@ class RemoteWebsocket():
         self.open_event.set()
 
     def open(self):
-        import websocket
-
         def do():
             token = ''
             all_tokens = []
