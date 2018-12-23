@@ -8,6 +8,7 @@ import ssl
 import os
 import sys
 import websocket
+import time
 from . import exceptions
 
 
@@ -46,6 +47,7 @@ class RemoteWebsocket(object):
         self.receive_event = threading.Event()
         self.receive_lock = threading.Lock()
         self.close_event = threading.Event()
+        self._receive_callbacks = []
 
         self.open()
 
@@ -128,6 +130,9 @@ class RemoteWebsocket(object):
             self.close()
             raise RuntimeError('Auth Failure')
 
+    def register_receive_callback(self, cls, response):
+        self._receive_callbacks += [[cls, response]]
+
     def on_close(self, _):
         logger.debug('Websocket Connection Closed')
         self.connection = None
@@ -205,9 +210,141 @@ class RemoteWebsocket(object):
                 self.close()
                 raise RuntimeError('Authentication denied')
 
+        for cls, pattern in self._receive_callbacks[:]:
+            if pattern == response['event']:
+                try:
+                    getattr(cls, pattern.split('.')[-1])()
+                except AttributeError:
+                    logger.error(
+                        'Unable to locate remote response callback method %s',
+                        pattern.split('.')[-1]
+                    )
+                self._receive_callbacks.remove([cls, pattern])
+
     @staticmethod
     def _serialize_string(string):
         if isinstance(string, str):
             string = str.encode(string)
 
         return base64.b64encode(string).decode("utf-8")
+
+    @property
+    def mouse(self):
+        return Mouse(self)
+
+
+class Mouse(object):
+
+    def __init__(self, remote):
+        self._remote = remote
+        self._is_running = False
+        self._commands = []
+        self._ime_start_event = threading.Event()
+        self._ime_update_event = threading.Event()
+        self._touch_enable_event = threading.Event()
+        self._send_event = threading.Event()
+
+    @property
+    def is_running(self):
+        return self._is_running
+
+    def clear(self):
+        if not self.is_running:
+            del self._commands[:]
+
+    def _send(self, cmd, **kwargs):
+        """Send a control command."""
+
+        if not self._remote.connection:
+            raise exceptions.ConnectionClosed()
+
+        if not self.is_running:
+            params = {
+                "Cmd":          cmd,
+                "TypeOfRemote": "ProcessMouseDevice"
+            }
+            params.update(kwargs)
+
+            payload = json.dumps({
+                "method": "ms.remote.control",
+                "params": params
+            })
+
+            self._commands += [payload]
+
+    def left_click(self):
+        self._send('LeftClick')
+
+    def right_click(self):
+        self._send('RightClick')
+
+    def move(self, x, y):
+        position = dict(
+            x=x,
+            y=y,
+            Time=str(time.time())
+        )
+
+        self._send('Move', Position=position)
+
+    def add_wait(self, wait):
+        if self._is_running:
+            self._commands += [wait]
+
+    def imeStart(self):
+        self._ime_start_event.set()
+
+    def imeUpdate(self):
+        self._ime_update_event.set()
+
+    def touchEnable(self):
+        self._touch_enable_event.set()
+
+    def stop(self):
+        if self.is_running:
+            self._send_event.set()
+            self._ime_start_event.set()
+            self._ime_update_event.set()
+            self._touch_enable_event.set()
+
+    def run(self):
+        if not self.is_running:
+            self._send_event.clear()
+            self._ime_start_event.clear()
+            self._ime_update_event.clear()
+            self._touch_enable_event.clear()
+
+            self._is_running = True
+
+            with self._remote.receive_lock:
+                self._remote.register_receive_callback(
+                    self,
+                    "ms.remote.imeStart"
+                )
+                self._remote.register_receive_callback(
+                    self,
+                    "ms.remote.imeUpdate"
+                )
+                self._remote.register_receive_callback(
+                    self,
+                    "ms.remote.touchEnable"
+                )
+
+                for payload in self._commands:
+                    if isinstance(payload, (float, int)):
+                        self._send_event.wait(payload)
+                        if self._send_event.isSet():
+                            self._is_running = False
+                            return
+                    else:
+                        logger.info(
+                            "Sending mouse control command: " + str(payload)
+                        )
+                        self._remote.receive_event.clear()
+                        self._remote.connection.send(payload)
+
+                self._ime_start_event.wait(len(self._commands))
+                self._ime_update_event.wait(len(self._commands))
+                self._touch_enable_event.wait(len(self._commands))
+
+                self._is_running = False
