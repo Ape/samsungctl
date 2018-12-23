@@ -84,9 +84,6 @@ class RemoteWebsocket(object):
                 if self.connection is not None:
                     self.connection.close()
 
-                self.close_event.wait(1.0)
-                self.close_event.clear()
-
                 if token or self.config['port'] == 8002:
                     self.config['port'] = 8002
                     url = SSL_URL_FORMAT.format(
@@ -134,7 +131,6 @@ class RemoteWebsocket(object):
     def on_close(self, _):
         logger.debug('Websocket Connection Closed')
         self.connection = None
-        self.close_event.set()
 
     def on_error(self, _, error):
         logger.error(error)
@@ -150,10 +146,6 @@ class RemoteWebsocket(object):
         if self.connection:
             with self.receive_lock:
                 self.connection.close()
-                self.close_event.wait(5.0)
-
-                if not self.close_event.isSet():
-                    raise RuntimeError('Close Failure')
 
     def control(self, key):
         """Send a control command."""
