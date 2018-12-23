@@ -243,6 +243,36 @@ with samsungctl.Remote(config) as remote:
 
 
 <br></br>
+***Voice Recognition***
+---------------------
+
+If you TV supports voice recognition you have the ability to start and
+stop the voice recognition service on the TV. this can be done only by
+using the samsungctl library as a package to an already existing program.
+example code of how to do this is below.
+
+
+```python
+import samsungctl
+import time
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    remote.start_voice_recognition()
+    time.sleep(5.0)
+    remote.stop_voice_recognition()
+```
+
+<br></br>
 ***Key codes***
 ---------------
 Here is the new list of keycodes that are supported.
