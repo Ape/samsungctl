@@ -175,6 +175,11 @@ class RemoteWebsocket(object):
 
     _key_interval = 0.5
 
+    def get_application(self, pattern):
+        for app in self.applications:
+            if pattern in (app.app_id, app.name):
+                return app
+
     @property
     def applications(self):
         eden_event = threading.Event()

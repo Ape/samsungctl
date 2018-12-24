@@ -243,6 +243,144 @@ with samsungctl.Remote(config) as remote:
 
 
 <br></br>
+***Applications***
+---------------------
+
+This is going to be a wee bit long winded. But here goes
+<br></br>
+
+below is a sample of how to access the applications on the TV
+
+```python
+import samsungctl
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    for app in remote.applications:
+        print('name:', app.name)
+        print('=' * 30)
+        print('id:', app.app_id)
+        print('is running:', app.is_running)
+        print('version:', app.version)
+        print()
+```
+
+if you want to access a specific application by name or by the app id
+
+```python
+import samsungctl
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    app = remote.get_application('YouTube')
+    if app is not None:
+        print('name:', app.name)
+        print('=' * 30)
+        print('id:', app.app_id)
+        print('is running:', app.is_running)
+        print('version:', app.version)
+        print()
+```
+
+these are the available properties for an application
+
+* is_lock
+* name
+* app_type
+* position
+* app_id
+* launcher_type
+* mbr_index
+* source_type_num
+* icon
+* id
+* mbr_source
+* action_type
+* version
+* is_visible
+* is_running
+
+
+now here is a little bonus. we can also iterate over an application for
+any content groups. and then we can iterate over the content group for
+the available content in that group
+
+
+```python
+import samsungctl
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    for app in remote.applications:
+        print('name:', app.name)
+        print('=' * 30)
+        for content_group in application:
+            print('   ', content_group.title)
+            print('   ', '-' * 26)
+            for content in content_group:
+                print('       ', content.title)
+```
+
+
+here are the available properties for the content group
+
+* title
+
+here are the available properties for the content
+
+* is_playable
+* subtitle
+* app_type
+* title
+* mbr_index
+* live_launcher_type
+* action_play_url
+* service_id
+* launcher_type
+* source_type_num
+* action_type
+* app_id
+* subtitle2
+* display_from
+* display_until
+* mbr_source
+* id
+* subtitle3
+* icon
+
+
+You can also run an application or a piece of content by calling `run()`
+on either an application or on the content.
+
+
+<br></br>
 ***Key codes***
 ---------------
 Here is the new list of keycodes that are supported.

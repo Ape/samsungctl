@@ -270,7 +270,6 @@ class Application(object):
     ):
 
         self._remote = remote
-
         self._is_lock = isLock
         self.name = name
         self.app_type = app_type
@@ -278,7 +277,10 @@ class Application(object):
         self.app_id = appId
         self.launcher_type = launcherType
         self.mbr_index = mbrIndex
-        self._accelerators = accelerators
+        if accelerators is not None:
+            self._accelerators = accelerators
+        else:
+            self._accelerators = []
         self.source_type_num = sourceTypeNum
         self._icon = icon
         self.id = id
@@ -442,7 +444,7 @@ class AppData(object):
         self._remote = remote
         self._is_playable = isPlayable
         self.subtitle = subtitle
-        self.appType = appType
+        self.app_type = appType
         self.title = title
         self.mbr_index = mbrIndex
         self.live_launcher_type = liveLauncherType
@@ -463,48 +465,6 @@ class AppData(object):
     @property
     def is_playable(self):
         return bool(self._is_playable)
-
-    @property
-    def is_visible(self):
-        if not self.is_playable:
-            return False
-
-        url = 'http://{0}:8001/api/v2/applications/{1}'.format(
-            self._remote.config['host'],
-            self.app_id
-        )
-
-        response = requests.get(url)
-        try:
-            response = response.json()
-        except:
-            return None
-
-        if 'visible' not in response:
-            return None
-
-        return response['visible']
-
-    @property
-    def is_running(self):
-        if not self.is_playable:
-            return False
-
-        url = 'http://{0}:8001/api/v2/applications/{1}'.format(
-            self._remote.config['host'],
-            self.app_id
-        )
-
-        response = requests.get(url)
-        try:
-            response = response.json()
-        except:
-            return None
-
-        if 'running' not in response:
-            return None
-
-        return response['running']
 
     def run(self):
         if self.is_playable and self.action_type:
