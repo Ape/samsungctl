@@ -17,7 +17,7 @@ setuptools.setup(
         "console_scripts": ["samsungctl=samsungctl.__main__:main"]
     },
     packages=["samsungctl"],
-    install_requires=["websocket-client"],
+    install_requires=["websocket-client>=0.54.0"],
     extras_require={
         "interactive_ui": ["curses"],
     },
