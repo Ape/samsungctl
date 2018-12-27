@@ -63,7 +63,7 @@ class RemoteWebsocket(websocket.WebSocketApp):
             for line in tokens.split('\n'):
                 if not line.strip():
                     continue
-                if line.startswith(self.config["host"]):
+                if line.startswith(self.config["host"] + ':'):
                     token = line
                 else:
                     all_tokens += [line]
@@ -178,7 +178,7 @@ class RemoteWebsocket(websocket.WebSocketApp):
                     token_data = token_file.read().split('\n')
 
                 for line in token_data[:]:
-                    if self.config['host'] in line:
+                    if line.startswith(self.config['host'] + ':'):
                         token_data.remove(line)
 
                 token_data += [token]
