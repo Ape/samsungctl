@@ -45,6 +45,7 @@ class RemoteWebsocket(websocket.WebSocketApp):
         self.receive_event = threading.Event()
         self.receive_lock = threading.Lock()
         self.close_event = threading.Event()
+        self.sock = None
 
         self.open()
 
