@@ -18,7 +18,7 @@ URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
 
-class RemoteWebsocket(object):
+class RemoteWebsocket(websocket.WebSocketApp):
     """Object for remote control connection."""
 
     def __init__(self, config):
@@ -39,7 +39,6 @@ class RemoteWebsocket(object):
         self.token_file = token_file
 
         self.config = config
-        self.connection = None
 
         self.open_event = threading.Event()
         self.auth_event = threading.Event()
@@ -49,9 +48,8 @@ class RemoteWebsocket(object):
 
         self.open()
 
-    def on_open(self, ws):
+    def on_open(self, *_):
         logger.debug('Websocket Connection Opened')
-        self.connection = ws
         self.open_event.set()
 
     def open(self):
@@ -81,8 +79,8 @@ class RemoteWebsocket(object):
                     f.write('\n'.join(all_tokens) + '\n')
 
             with self.receive_lock:
-                if self.connection is not None:
-                    self.connection.close()
+                if self.sock is not None:
+                    self.close()
 
                 if token or self.config['port'] == 8002:
                     self.config['port'] = 8002
@@ -100,18 +98,12 @@ class RemoteWebsocket(object):
                         self._serialize_string(self.config["name"])
                     )
 
-                ws = websocket.WebSocketApp(
-                    url,
-                    on_close=self.on_close,
-                    on_open=self.on_open,
-                    on_error=self.on_error,
-                    on_message=self.on_message
-                )
+                super(RemoteWebsocket, self).__init__(url)
 
             if token or self.config['port'] == 8002:
-                ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+                self.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
             else:
-                ws.run_forever()
+                self.run_forever()
 
         self.open_event.clear()
         self.auth_event.clear()
@@ -128,12 +120,11 @@ class RemoteWebsocket(object):
             self.close()
             raise RuntimeError('Auth Failure')
 
-    def on_close(self, _):
+    def on_close(self, *_):
         logger.debug('Websocket Connection Closed')
-        self.connection = None
 
-    def on_error(self, _, error):
-        logger.error(error)
+    def on_error(self, *args):
+        logger.error('Websocket error: %s', args)
 
     def __enter__(self):
         return self
@@ -143,13 +134,13 @@ class RemoteWebsocket(object):
 
     def close(self):
         """Close the connection."""
-        if self.connection:
+        if self.sock is not None:
             with self.receive_lock:
-                self.connection.close()
+                websocket.WebSocketApp.close(self)
 
     def control(self, key):
         """Send a control command."""
-        if not self.connection:
+        if self.sock is None:
             raise exceptions.ConnectionClosed()
 
         with self.receive_lock:
@@ -166,12 +157,17 @@ class RemoteWebsocket(object):
 
             logger.info("Sending control command: " + key)
             self.receive_event.clear()
-            self.connection.send(payload)
+            self.send(payload)
             self.receive_event.wait(0.35)
 
     _key_interval = 0.5
 
-    def on_message(self, _, message):
+    def on_message(self, *args):
+        if len(args) == 1:
+            message = args[0]
+        else:
+            message = args[1]
+
         response = json.loads(message)
         logger.debug('incoming message: ' + message)
 
