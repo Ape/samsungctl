@@ -52,7 +52,7 @@ def _read_config():
         try:
             config_json = json.load(config_file)
         except ValueError as e:
-            messsage = "Warning: Could not parse the configuration file.\n  %s"
+            message = "Warning: Could not parse the configuration file.\n  %s"
             logging.warning(message, e)
             return config
 
