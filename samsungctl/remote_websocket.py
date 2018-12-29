@@ -8,6 +8,7 @@ from . import exceptions
 
 
 URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
+_LOGGER = logging.getLogger(__package__)
 
 
 class RemoteWebsocket():
@@ -40,7 +41,7 @@ class RemoteWebsocket():
         if self.connection:
             self.connection.close()
             self.connection = None
-            logging.debug("Connection closed.")
+            _LOGGER.debug("Connection closed.")
 
     def control(self, key):
         """Send a control command."""
@@ -57,7 +58,7 @@ class RemoteWebsocket():
             }
         })
 
-        logging.info("Sending control command: %s", key)
+        _LOGGER.info("Sending control command: %s", key)
         self.connection.send(payload)
         time.sleep(self._key_interval)
 
@@ -71,7 +72,7 @@ class RemoteWebsocket():
             self.close()
             raise exceptions.UnhandledResponse(response)
 
-        logging.debug("Access granted.")
+        _LOGGER.debug("Access granted.")
 
     @staticmethod
     def _serialize_string(string):

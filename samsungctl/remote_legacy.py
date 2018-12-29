@@ -4,6 +4,7 @@ import socket
 import time
 
 from . import exceptions
+_LOGGER = logging.getLogger(__package__)
 
 
 class RemoteLegacy():
@@ -27,7 +28,7 @@ class RemoteLegacy():
                   + self._serialize_string(config["name"])
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
-        logging.info("Sending handshake.")
+        _LOGGER.info("Sending handshake.")
         self.connection.send(packet)
         self._read_response(True)
 
@@ -42,7 +43,7 @@ class RemoteLegacy():
         if self.connection:
             self.connection.close()
             self.connection = None
-            logging.debug("Connection closed.")
+            _LOGGER.debug("Connection closed.")
 
     def control(self, key):
         """Send a control command."""
@@ -52,7 +53,7 @@ class RemoteLegacy():
         payload = b"\x00\x00\x00" + self._serialize_string(key)
         packet = b"\x00\x00\x00" + self._serialize_string(payload, True)
 
-        logging.info("Sending control command: %s", key)
+        _LOGGER.info("Sending control command: %s", key)
         self.connection.send(packet)
         self._read_response()
         time.sleep(self._key_interval)
@@ -66,7 +67,7 @@ class RemoteLegacy():
         tv_name = self.connection.recv(tv_name_len)
 
         if first_time:
-            logging.debug("Connected to '%s'.", tv_name.decode())
+            _LOGGER.debug("Connected to '%s'.", tv_name.decode())
 
         response_len = int.from_bytes(self.connection.recv(2),
                                       byteorder="little")
@@ -77,19 +78,19 @@ class RemoteLegacy():
             raise exceptions.ConnectionClosed()
 
         if response == b"\x64\x00\x01\x00":
-            logging.debug("Access granted.")
+            _LOGGER.debug("Access granted.")
             return
         elif response == b"\x64\x00\x00\x00":
             raise exceptions.AccessDenied()
         elif response[0:1] == b"\x0a":
             if first_time:
-                logging.warning("Waiting for authorization...")
+                _LOGGER.warning("Waiting for authorization...")
             return self._read_response()
         elif response[0:1] == b"\x65":
-            logging.warning("Authorization cancelled.")
+            _LOGGER.warning("Authorization cancelled.")
             raise exceptions.AccessDenied()
         elif response == b"\x00\x00\x00\x00":
-            logging.debug("Control accepted.")
+            _LOGGER.debug("Control accepted.")
             return
 
         raise exceptions.UnhandledResponse(response)
