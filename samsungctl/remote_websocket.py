@@ -50,7 +50,7 @@ class RemoteWebsocket(websocket.WebSocketApp):
         self._registered_callbacks = []
         self._receive_callbacks = []
         self.sock = None
-        
+
         self.open()
 
     def on_open(self, *_):
@@ -125,11 +125,7 @@ class RemoteWebsocket(websocket.WebSocketApp):
             self.close()
             raise RuntimeError('Auth Failure')
 
-    def register_receive_callback(self, cls, response):
-        self._receive_callbacks += [[cls, response]]
-
     def on_close(self, *_):
-
         logger.debug('Websocket Connection Closed')
 
     def on_error(self, *args):
@@ -154,8 +150,7 @@ class RemoteWebsocket(websocket.WebSocketApp):
                 params=params
             )
             self.receive_event.clear()
-            self.connection.send(json.dumps(payload))
-            
+            self.send(json.dumps(payload))
 
     def control(self, key, cmd='Click'):
         """
@@ -169,12 +164,12 @@ class RemoteWebsocket(websocket.WebSocketApp):
             raise exceptions.ConnectionClosed()
 
         params = dict(
-            Cmd="Click",
+            Cmd=cmd,
             DataOfCmd=key,
             Option="false",
             TypeOfRemote="SendRemoteKey"
         )
-        
+
         logger.info("Sending control command: " + str(params))
         self.send("ms.remote.control", **params)
         self.receive_event.wait(0.35)
@@ -230,11 +225,13 @@ class RemoteWebsocket(websocket.WebSocketApp):
 
         return res
 
+    def register_mouse_callback(self, cls, response):
+        self._receive_callbacks += [[cls, response]]
+
     def register_receive_callback(self, callback, key, data):
         self._registered_callbacks += [[callback, key, data]]
 
-    def on_message(self, _, message):
-      def on_message(self, *args):
+    def on_message(self, *args):
         if len(args) == 1:
             message = args[0]
         else:
@@ -393,15 +390,15 @@ class Mouse(object):
             self._is_running = True
 
             with self._remote.receive_lock:
-                self._remote.register_receive_callback(
+                self._remote.register_mouse_callback(
                     self,
                     "ms.remote.imeStart"
                 )
-                self._remote.register_receive_callback(
+                self._remote.register_mouse_callback(
                     self,
                     "ms.remote.imeUpdate"
                 )
-                self._remote.register_receive_callback(
+                self._remote.register_mouse_callback(
                     self,
                     "ms.remote.touchEnable"
                 )
