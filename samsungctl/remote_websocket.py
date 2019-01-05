@@ -10,6 +10,7 @@ import sys
 import websocket
 import time
 from . import exceptions
+from . import application
 
 
 logger = logging.getLogger('samsungctl')
@@ -46,10 +47,10 @@ class RemoteWebsocket(websocket.WebSocketApp):
         self.receive_event = threading.Event()
         self.receive_lock = threading.Lock()
         self.close_event = threading.Event()
+        self._registered_callbacks = []
         self._receive_callbacks = []
         self.sock = None
-
-
+        
         self.open()
 
     def on_open(self, *_):
@@ -146,6 +147,16 @@ class RemoteWebsocket(websocket.WebSocketApp):
             with self.receive_lock:
                 websocket.WebSocketApp.close(self)
 
+    def send(self, method, **params):
+        with self.receive_lock:
+            payload = dict(
+                method=method,
+                params=params
+            )
+            self.receive_event.clear()
+            self.connection.send(json.dumps(payload))
+            
+
     def control(self, key, cmd='Click'):
         """
         Send a control command.
@@ -157,26 +168,73 @@ class RemoteWebsocket(websocket.WebSocketApp):
         if self.sock is None:
             raise exceptions.ConnectionClosed()
 
-        with self.receive_lock:
-
-            payload = json.dumps({
-                "method": "ms.remote.control",
-                "params": {
-                    "Cmd": cmd,
-                    "DataOfCmd": key,
-                    "Option": "false",
-                    "TypeOfRemote": "SendRemoteKey"
-                }
-            })
-
-            logger.info("Sending control command: " + key)
-            self.receive_event.clear()
-            self.send(payload)
-            self.receive_event.wait(0.35)
+        params = dict(
+            Cmd="Click",
+            DataOfCmd=key,
+            Option="false",
+            TypeOfRemote="SendRemoteKey"
+        )
+        
+        logger.info("Sending control command: " + str(params))
+        self.send("ms.remote.control", **params)
+        self.receive_event.wait(0.35)
 
     _key_interval = 0.5
 
-    def on_message(self, *args):
+    def get_application(self, pattern):
+        for app in self.applications:
+            if pattern in (app.app_id, app.name):
+                return app
+
+    @property
+    def applications(self):
+        eden_event = threading.Event()
+        installed_event = threading.Event()
+
+        app_data = [[], []]
+
+        def eden_app_get(data):
+            if 'data' in data:
+                app_data[0] = data['data']['data']
+            eden_event.set()
+
+        def installed_app_get(data):
+            if 'data' in data:
+                app_data[1] = data['data']
+            installed_event.set()
+
+        self.register_receive_callback(eden_app_get, 'event', 'ed.edenApp.get')
+        self.register_receive_callback(installed_app_get, 'data', None)
+
+        for event in ['ed.edenApp.get', 'ed.installedApp.get']:
+
+            params = dict(
+                data='',
+                event=event,
+                to='host'
+            )
+
+            self.send('ms.channel.emit', **params)
+
+        eden_event.wait(2.0)
+        installed_event.wait(2.0)
+
+        for app_1 in app_data[1]:
+            for app_2 in app_data[0]:
+                if app_1['appId'] == app_2['appId']:
+                    app_1.update(app_2)
+
+        res = []
+        for app in app_data[1]:
+            res += [application.Application(self, **app)]
+
+        return res
+
+    def register_receive_callback(self, callback, key, data):
+        self._registered_callbacks += [[callback, key, data]]
+
+    def on_message(self, _, message):
+      def on_message(self, *args):
         if len(args) == 1:
             message = args[0]
         else:
@@ -214,6 +272,11 @@ class RemoteWebsocket(websocket.WebSocketApp):
             else:
                 self.close()
                 raise RuntimeError('Authentication denied')
+
+        for callback, key, data in self._registered_callbacks[:]:
+            if key in response and (data is None or response[key] == data):
+                callback(response)
+                self._registered_callbacks.remove([callback, key, data])
 
         for cls, pattern in self._receive_callbacks[:]:
             if pattern == response['event']:
