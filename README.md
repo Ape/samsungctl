@@ -240,8 +240,6 @@ with samsungctl.Remote(config) as remote:
         remote.control("KEY_MENU")
         time.sleep(0.5)
 ```
-
-
 <br></br>
 ***Mouse Control***
 ---------------------
@@ -295,9 +293,10 @@ the output to me. that will aide in making this all automatic. I need
 this data form several TV models and years. as Samsung could have
 changed the mouse speed and acceleration between years/models.
 
-
 ```python
 import samsungctl
+import time
+
 
 config = {
     "name": "samsungctl",
@@ -310,7 +309,7 @@ config = {
 }
 
 with samsungctl.Remote(config) as remote:
-    mouse = remote.mouse
+     mouse = remote.mouse
 
     def move_mouse(_x, _y):
         mouse.move(x=x, y=y)
@@ -329,6 +328,36 @@ with samsungctl.Remote(config) as remote:
         for y in range(1080):
             move_mouse(0, y)
             move_mouse(x, y)
+```
+<br></br>
+***Voice Recognition***
+---------------------
+
+If you TV supports voice recognition you have the ability to start and
+stop the voice recognition service on the TV. this can be done only by
+using the samsungctl library as a package to an already existing program.
+example code of how to do this is below.
+
+
+
+```python
+import samsungctl
+import time
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    remote.start_voice_recognition()
+    time.sleep(5.0)
+    remote.stop_voice_recognition()
 ```
 
 <br></br>
