@@ -8,6 +8,7 @@ import ssl
 import os
 import sys
 import websocket
+import time
 from . import exceptions
 from . import application
 
@@ -19,7 +20,7 @@ URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
 
-class RemoteWebsocket(object):
+class RemoteWebsocket(websocket.WebSocketApp):
     """Object for remote control connection."""
 
     def __init__(self, config):
@@ -40,7 +41,6 @@ class RemoteWebsocket(object):
         self.token_file = token_file
 
         self.config = config
-        self.connection = None
 
         self.open_event = threading.Event()
         self.auth_event = threading.Event()
@@ -48,12 +48,13 @@ class RemoteWebsocket(object):
         self.receive_lock = threading.Lock()
         self.close_event = threading.Event()
         self._registered_callbacks = []
-
+        self._receive_callbacks = []
+        self.sock = None
+        
         self.open()
 
-    def on_open(self, ws):
+    def on_open(self, *_):
         logger.debug('Websocket Connection Opened')
-        self.connection = ws
         self.open_event.set()
 
     def open(self):
@@ -67,7 +68,7 @@ class RemoteWebsocket(object):
             for line in tokens.split('\n'):
                 if not line.strip():
                     continue
-                if line.startswith(self.config["host"]):
+                if line.startswith(self.config["host"] + ':'):
                     token = line
                 else:
                     all_tokens += [line]
@@ -83,8 +84,8 @@ class RemoteWebsocket(object):
                     f.write('\n'.join(all_tokens) + '\n')
 
             with self.receive_lock:
-                if self.connection is not None:
-                    self.connection.close()
+                if self.sock is not None:
+                    self.close()
 
                 if token or self.config['port'] == 8002:
                     self.config['port'] = 8002
@@ -102,18 +103,12 @@ class RemoteWebsocket(object):
                         self._serialize_string(self.config["name"])
                     )
 
-                ws = websocket.WebSocketApp(
-                    url,
-                    on_close=self.on_close,
-                    on_open=self.on_open,
-                    on_error=self.on_error,
-                    on_message=self.on_message
-                )
+                super(RemoteWebsocket, self).__init__(url)
 
             if token or self.config['port'] == 8002:
-                ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+                self.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
             else:
-                ws.run_forever()
+                self.run_forever()
 
         self.open_event.clear()
         self.auth_event.clear()
@@ -130,12 +125,15 @@ class RemoteWebsocket(object):
             self.close()
             raise RuntimeError('Auth Failure')
 
-    def on_close(self, _):
-        logger.debug('Websocket Connection Closed')
-        self.connection = None
+    def register_receive_callback(self, cls, response):
+        self._receive_callbacks += [[cls, response]]
 
-    def on_error(self, _, error):
-        logger.error(error)
+    def on_close(self, *_):
+
+        logger.debug('Websocket Connection Closed')
+
+    def on_error(self, *args):
+        logger.error('Websocket error: %s', args)
 
     def __enter__(self):
         return self
@@ -145,9 +143,9 @@ class RemoteWebsocket(object):
 
     def close(self):
         """Close the connection."""
-        if self.connection:
+        if self.sock is not None:
             with self.receive_lock:
-                self.connection.close()
+                websocket.WebSocketApp.close(self)
 
     def send(self, method, **params):
         with self.receive_lock:
@@ -157,10 +155,17 @@ class RemoteWebsocket(object):
             )
             self.receive_event.clear()
             self.connection.send(json.dumps(payload))
+            
 
-    def control(self, key):
-        """Send a control command."""
-        if not self.connection:
+    def control(self, key, cmd='Click'):
+        """
+        Send a control command.
+        cmd can be one of the following
+        'Click'
+        'Press'
+        'Release'
+        """
+        if self.sock is None:
             raise exceptions.ConnectionClosed()
 
         params = dict(
@@ -169,7 +174,8 @@ class RemoteWebsocket(object):
             Option="false",
             TypeOfRemote="SendRemoteKey"
         )
-
+        
+        logger.info("Sending control command: " + str(params))
         self.send("ms.remote.control", **params)
         self.receive_event.wait(0.35)
 
@@ -228,6 +234,12 @@ class RemoteWebsocket(object):
         self._registered_callbacks += [[callback, key, data]]
 
     def on_message(self, _, message):
+      def on_message(self, *args):
+        if len(args) == 1:
+            message = args[0]
+        else:
+            message = args[1]
+
         response = json.loads(message)
         logger.debug('incoming message: ' + message)
 
@@ -238,7 +250,7 @@ class RemoteWebsocket(object):
                     token_data = token_file.read().split('\n')
 
                 for line in token_data[:]:
-                    if self.config['host'] in line:
+                    if line.startswith(self.config['host'] + ':'):
                         token_data.remove(line)
 
                 token_data += [token]
@@ -266,9 +278,149 @@ class RemoteWebsocket(object):
                 callback(response)
                 self._registered_callbacks.remove([callback, key, data])
 
+        for cls, pattern in self._receive_callbacks[:]:
+            if pattern == response['event']:
+                try:
+                    getattr(cls, pattern.split('.')[-1])()
+                except AttributeError:
+                    logger.error(
+                        'Unable to locate remote response callback method %s',
+                        pattern.split('.')[-1]
+                    )
+                self._receive_callbacks.remove([cls, pattern])
+
+    def start_voice_recognition(self):
+        """Activates voice recognition."""
+        self.control('KEY_BT_VOICE', 'Press')
+
+    def stop_voice_recognition(self):
+        """Activates voice recognition."""
+        self.control('KEY_BT_VOICE', 'Release')
+
     @staticmethod
     def _serialize_string(string):
         if isinstance(string, str):
             string = str.encode(string)
 
         return base64.b64encode(string).decode("utf-8")
+
+    @property
+    def mouse(self):
+        return Mouse(self)
+
+
+class Mouse(object):
+
+    def __init__(self, remote):
+        self._remote = remote
+        self._is_running = False
+        self._commands = []
+        self._ime_start_event = threading.Event()
+        self._ime_update_event = threading.Event()
+        self._touch_enable_event = threading.Event()
+        self._send_event = threading.Event()
+
+    @property
+    def is_running(self):
+        return self._is_running
+
+    def clear(self):
+        if not self.is_running:
+            del self._commands[:]
+
+    def _send(self, cmd, **kwargs):
+        """Send a control command."""
+
+        if not self._remote.connection:
+            raise exceptions.ConnectionClosed()
+
+        if not self.is_running:
+            params = {
+                "Cmd":          cmd,
+                "TypeOfRemote": "ProcessMouseDevice"
+            }
+            params.update(kwargs)
+
+            payload = json.dumps({
+                "method": "ms.remote.control",
+                "params": params
+            })
+
+            self._commands += [payload]
+
+    def left_click(self):
+        self._send('LeftClick')
+
+    def right_click(self):
+        self._send('RightClick')
+
+    def move(self, x, y):
+        position = dict(
+            x=x,
+            y=y,
+            Time=str(time.time())
+        )
+
+        self._send('Move', Position=position)
+
+    def add_wait(self, wait):
+        if self._is_running:
+            self._commands += [wait]
+
+    def imeStart(self):
+        self._ime_start_event.set()
+
+    def imeUpdate(self):
+        self._ime_update_event.set()
+
+    def touchEnable(self):
+        self._touch_enable_event.set()
+
+    def stop(self):
+        if self.is_running:
+            self._send_event.set()
+            self._ime_start_event.set()
+            self._ime_update_event.set()
+            self._touch_enable_event.set()
+
+    def run(self):
+        if not self.is_running:
+            self._send_event.clear()
+            self._ime_start_event.clear()
+            self._ime_update_event.clear()
+            self._touch_enable_event.clear()
+
+            self._is_running = True
+
+            with self._remote.receive_lock:
+                self._remote.register_receive_callback(
+                    self,
+                    "ms.remote.imeStart"
+                )
+                self._remote.register_receive_callback(
+                    self,
+                    "ms.remote.imeUpdate"
+                )
+                self._remote.register_receive_callback(
+                    self,
+                    "ms.remote.touchEnable"
+                )
+
+                for payload in self._commands:
+                    if isinstance(payload, (float, int)):
+                        self._send_event.wait(payload)
+                        if self._send_event.isSet():
+                            self._is_running = False
+                            return
+                    else:
+                        logger.info(
+                            "Sending mouse control command: " + str(payload)
+                        )
+                        self._remote.receive_event.clear()
+                        self._remote.connection.send(payload)
+
+                self._ime_start_event.wait(len(self._commands))
+                self._ime_update_event.wait(len(self._commands))
+                self._touch_enable_event.wait(len(self._commands))
+
+                self._is_running = False
