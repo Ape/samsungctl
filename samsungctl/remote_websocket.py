@@ -139,8 +139,14 @@ class RemoteWebsocket(websocket.WebSocketApp):
             with self.receive_lock:
                 websocket.WebSocketApp.close(self)
 
-    def control(self, key):
-        """Send a control command."""
+    def control(self, key, cmd='Click'):
+        """
+        Send a control command.
+        cmd can be one of the following
+        'Click'
+        'Press'
+        'Release'
+        """
         if self.sock is None:
             raise exceptions.ConnectionClosed()
 
@@ -149,7 +155,7 @@ class RemoteWebsocket(websocket.WebSocketApp):
             payload = json.dumps({
                 "method": "ms.remote.control",
                 "params": {
-                    "Cmd": "Click",
+                    "Cmd": cmd,
                     "DataOfCmd": key,
                     "Option": "false",
                     "TypeOfRemote": "SendRemoteKey"
@@ -201,6 +207,14 @@ class RemoteWebsocket(websocket.WebSocketApp):
             else:
                 self.close()
                 raise RuntimeError('Authentication denied')
+
+    def start_voice_recognition(self):
+        """Activates voice recognition."""
+        self.control('KEY_BT_VOICE', 'Press')
+
+    def stop_voice_recognition(self):
+        """Activates voice recognition."""
+        self.control('KEY_BT_VOICE', 'Release')
 
     @staticmethod
     def _serialize_string(string):
