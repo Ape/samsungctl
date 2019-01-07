@@ -4,16 +4,21 @@ import sys
 try:
     import websocket
 
-    websocket_version = tuple(websocket.__version__.split('.'))
+    websocket_version = tuple(int(v) for v in websocket.__version__.split('.'))
     if websocket_version > (0, 48, 0):
-        answer = input(
+        message = (
             'The version of the websocket-client library that is currently\n'
             'installed is newer then the one that is needed by samsungctl.\n'
             'There are bugs in the version that is installed that will \n'
             'cause problems with samsungctl.\n\n'
-            'Would you like to downgrade the websocket-client library? (Y/N)'
+            'Would you like to downgrade the websocket-client library (Y/N)?'
         )
 
+        try:
+            answer = raw_input(message)
+        except NameError:
+            answer = input(message)
+        
         answer = answer.lower()
         if not answer.strip() or answer.strip()[0] != 'y':
             sys.exit(1)
@@ -23,7 +28,7 @@ try:
         except ImportError:
             from pip._internal import main
 
-        main(['install', '--uninstall', 'websocket-client'])
+        main(['uninstall', 'websocket-client'])
 
         for mod_name in list(sys.modules.keys())[:]:
             if mod_name.startswith('websocket.') or mod_name == 'websocket':
