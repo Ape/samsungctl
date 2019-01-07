@@ -25,7 +25,7 @@ try:
 
         main(['install', '--uninstall', 'websocket-client'])
 
-        for mod_name in sys.modules.keys():
+        for mod_name in list(sys.modules.keys())[:]:
             if mod_name.startswith('websocket.') or mod_name == 'websocket':
                 try:
                     del sys.modules[mod_name]
