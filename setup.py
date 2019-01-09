@@ -1,49 +1,138 @@
 #!/usr/bin/env python
-import sys
 
-try:
-    import websocket
 
-    websocket_version = tuple(int(v) for v in websocket.__version__.split('.'))
-    if websocket_version > (0, 48, 0):
+def clean_eggs(found):
+    import site
+    import os
+
+    package_locations = site.getsitepackages()
+    package_locations += [
+        site.getuserbase(),
+        site.getusersitepackages()
+    ]
+
+    easy_install_locations = []
+
+    for pth in package_locations:
+        pth = os.path.join(pth, 'easy_install.pth')
+        if os.path.exists(pth):
+            easy_install_locations += [pth]
+
+    for loc, ver in found:
+
+        for easy_path in easy_install_locations:
+            if os.path.split(easy_path)[0] in loc:
+                loc = './' + os.path.split(loc)[-1]
+                with open(easy_path, 'r') as f:
+                    easy_install_modules = f.read()
+
+                if loc in easy_install_modules:
+                    easy_install_modules = (
+                        easy_install_modules.replace(loc + '\n', '')
+                    )
+                    easy_install_modules = (
+                        easy_install_modules.replace(loc, '')
+                    )
+
+                    with open(easy_path, 'w') as f:
+                        f.write('\n'.join(easy_install_modules))
+
+
+def remove_installs():
+    import sys
+    import pkg_resources
+    import imp
+    import os
+    import zipimport
+
+    try:
+        from pip import main
+    except ImportError:
+        from pip._internal import main
+
+    found_installs = []
+
+    def is_version_good(v):
+        v = tuple(int(i) for i in v.split('.'))
+        return v <= (0, 48, 0)
+
+    for dist in pkg_resources.working_set:
+        for pkg_name in dist._get_metadata('top_level.txt'):
+            if pkg_name == 'websocket':
+
+                for location in sys.path:
+                    if location.startswith('/usr'):
+                        continue
+
+                    try:
+                        fp, path_name, description = imp.find_module(
+                            pkg_name,
+                            [location]
+                        )
+                        try:
+                            module = imp.load_module(
+                                pkg_name,
+                                fp,
+                                path_name,
+                                description
+                            )
+                        finally:
+                            if fp:
+                                fp.close()
+                    except:
+                        if os.path.isfile(location):
+                            module = zipimport.zipimporter(
+                                location
+                            ).find_module(pkg_name)
+                        else:
+                            continue
+
+                    if module and not is_version_good(module.__version__):
+                        if (location, module.__version__) not in found_installs:
+                            found_installs += [(location, module.__version__)]
+
+    if found_installs:
         message = (
-            'The version of the websocket-client library that is currently\n'
-            'installed is newer then the one that is needed by samsungctl.\n'
-            'There are bugs in the version that is installed that will \n'
+            'There are {0} version(s) of the websocket-client library that \n'
+            'are currently installed that are newer then the one that is \n'
+            'needed by samsungctl.\n'
+            'There are bugs in the version(s) that are installed that will \n'
             'cause problems with samsungctl.\n\n'
-            'Would you like to downgrade the websocket-client library (Y/N)?'
-        )
+            'Would you like to downgrade the installed version(s) of the \n'
+            'websocket-client library (Y/N)?'
+        ).format(len(found_installs))
 
         try:
             answer = raw_input(message)
         except NameError:
             answer = input(message)
-        
+
         answer = answer.lower()
         if not answer.strip() or answer.strip()[0] != 'y':
             sys.exit(1)
 
-        try:
-            from pip import main
-        except ImportError:
-            from pip._internal import main
+    cleanup = []
 
-        main(['uninstall', 'websocket-client'])
+    for loc, ver in found_installs:
+        if not loc.endswith('.egg'):
+            main(['uninstall', 'websocket-client==' + ver])
+        else:
+            cleanup.append((loc, ver))
 
-        for mod_name in list(sys.modules.keys())[:]:
-            if mod_name.startswith('websocket.') or mod_name == 'websocket':
-                try:
-                    del sys.modules[mod_name]
-                except KeyError:
-                    pass
+    if cleanup:
+        clean_eggs(cleanup)
 
+
+try:
+    import websocket
+    remove_installs()
 except ImportError:
     websocket = None
 
-import setuptools
-import samsungctl
-
 del websocket
+
+import setuptools # NOQA
+import samsungctl # NOQA
 
 setuptools.setup(
     name=samsungctl.__title__,
@@ -69,4 +158,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Topic :: Home Automation",
     ],
+    zip_safe=False
 )

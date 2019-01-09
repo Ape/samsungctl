@@ -24,6 +24,17 @@ class RemoteWebsocket(websocket.WebSocketApp):
     """Object for remote control connection."""
 
     def __init__(self, config):
+
+        version = tuple(int(v) for v in websocket.__version__.split('.'))
+        if version > (0, 48, 0):
+            raise RuntimeError(
+                'Incompatible websocket-client '
+                'library version ' + websocket.__version__ +
+                'version 0.48.0 is required'
+            )
+
+
+
         if sys.platform.startswith('win'):
             path = os.path.join(os.path.expandvars('%appdata%'), 'samsungctl')
         else:
