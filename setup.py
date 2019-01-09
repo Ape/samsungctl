@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-import setuptools
-
-import samsungctl
+import setuptools # NOQA
+import samsungctl # NOQA
 
 setuptools.setup(
     name=samsungctl.__title__,
@@ -17,7 +16,7 @@ setuptools.setup(
         "console_scripts": ["samsungctl=samsungctl.__main__:main"]
     },
     packages=["samsungctl"],
-    install_requires=["websocket-client>=0.54.0"],
+    install_requires=["websocket-client"],
     extras_require={
         "interactive_ui": ["curses"],
     },
@@ -28,4 +27,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Topic :: Home Automation",
     ],
+    zip_safe=False
 )

@@ -240,6 +240,262 @@ with samsungctl.Remote(config) as remote:
         remote.control("KEY_MENU")
         time.sleep(0.5)
 ```
+<br></br>
+***Mouse Control***
+---------------------
+
+Mouse control can only be done by using samsungctl as a python module.
+Mouse command are built. this way you can accomplish multiple movements
+in a single "command" and the movement set can be stored for later use.
+depending on how long it takes to accomplish a movement
+(distance traveled) you will need to insert a wait period in between
+each movement.
+
+```python
+import samsungctl
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    mouse = remote.mouse
+    mouse.move(x=100, y=300)
+    mouse.wait(0.5)
+    mouse.left_click()
+    mouse.run()
+    mouse.clear()
+```
+
+I designed this to all be thread safe. so only one mouse command set
+can be run at a single time. So if you have the mouse running in a
+thread and you need to stop the movement from another. or you simply
+want to terminate the program gracefully. you would call `mouse.stop()`
+
+
+I will be at a later date adding the wait periods on the mouse movements
+so it will be done automatically. I do not own one of the TV's so I do
+not know how long it takes to move the mouse different distances. I
+also do not know if the time it takes to move the mouse is linear. An
+example of linear movement would be it takes 1 second to move the
+mouse 100 pixels so to move it 200 pixels it would take 2 seconds.
+most devices that have mouse control also have acceleration and a
+min/max speed which would be non linear movement. An example of non
+linear is, if it took 1 second to move the mouse 100 pixels, to move it
+200 it would take 1.5 seconds. You can run the code below and report
+the output to me. that will aide in making this all automatic. I need
+this data form several TV models and years. as Samsung could have
+changed the mouse speed and acceleration between years/models.
+
+```python
+import samsungctl
+import time
+
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+     mouse = remote.mouse
+
+    def move_mouse(_x, _y):
+        mouse.move(x=x, y=y)
+        start = time.time()
+        mouse.run()
+        stop = time.time()
+        print('x:', x, 'y:', y, 'time:', (stop - start) * 1000)
+        mouse.clear()
+        mouse.move(x=-x, y=-y)
+        mouse.run()
+        mouse.clear()
+
+    for x in range(1920):
+        move_mouse(x, 0)
+
+        for y in range(1080):
+            move_mouse(0, y)
+            move_mouse(x, y)
+```
+<br></br>
+***Voice Recognition***
+---------------------
+
+If you TV supports voice recognition you have the ability to start and
+stop the voice recognition service on the TV. this can be done only by
+using the samsungctl library as a package to an already existing program.
+example code of how to do this is below.
+
+
+
+```python
+import samsungctl
+import time
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    remote.start_voice_recognition()
+    time.sleep(5.0)
+    remote.stop_voice_recognition()
+```
+
+<br></br>
+***Applications***
+---------------------
+
+This is going to be a wee bit long winded. But here goes
+<br></br>
+
+below is a sample of how to access the applications on the TV
+
+```python
+import samsungctl
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    for app in remote.applications:
+        print('name:', app.name)
+        print('=' * 30)
+        print('id:', app.app_id)
+        print('is running:', app.is_running)
+        print('version:', app.version)
+        print()
+```
+
+if you want to access a specific application by name or by the app id
+
+```python
+import samsungctl
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    app = remote.get_application('YouTube')
+    if app is not None:
+        print('name:', app.name)
+        print('=' * 30)
+        print('id:', app.app_id)
+        print('is running:', app.is_running)
+        print('version:', app.version)
+        print()
+```
+
+these are the available properties for an application
+
+* is_lock
+* name
+* app_type
+* position
+* app_id
+* launcher_type
+* mbr_index
+* source_type_num
+* icon
+* id
+* mbr_source
+* action_type
+* version
+* is_visible
+* is_running
+
+
+now here is a little bonus. we can also iterate over an application for
+any content groups. and then we can iterate over the content group for
+the available content in that group
+
+
+```python
+import samsungctl
+
+config = {
+    "name": "samsungctl",
+    "description": "PC",
+    "id": "",
+    "host": "192.168.0.10",
+    "port": 8002,
+    "method": "websocket",
+    "timeout": 0,
+}
+
+with samsungctl.Remote(config) as remote:
+    for app in remote.applications:
+        print('name:', app.name)
+        print('=' * 30)
+        for content_group in application:
+            print('   ', content_group.title)
+            print('   ', '-' * 26)
+            for content in content_group:
+                print('       ', content.title)
+```
+
+
+here are the available properties for the content group
+
+* title
+
+here are the available properties for the content
+
+* is_playable
+* subtitle
+* app_type
+* title
+* mbr_index
+* live_launcher_type
+* action_play_url
+* service_id
+* launcher_type
+* source_type_num
+* action_type
+* app_id
+* subtitle2
+* display_from
+* display_until
+* mbr_source
+* id
+* subtitle3
+* icon
+
+
+You can also run an application or a piece of content by calling `run()`
+on either an application or on the content.
 
 
 <br></br>
