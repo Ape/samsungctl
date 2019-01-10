@@ -19,6 +19,8 @@ missed expanding one or 2 of the sections.
 * @vitalets
 * @msvinth
 * @dcorsus
+* @xxKeoxx
+* @iAbadia
 
 
 Onto the library.
