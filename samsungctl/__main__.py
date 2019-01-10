@@ -228,8 +228,6 @@ def main():
     else:
         log_level = logging.DEBUG
 
-    logging.basicConfig(format="%(message)s", level=log_level)
-
     if args.key_help:
         keys_help(args.key)
 
@@ -241,7 +239,7 @@ def main():
         return
 
     try:
-        with Remote(config) as remote:
+        with Remote(config, log_level) as remote:
             if args.interactive:
                 logging.getLogger().setLevel(logging.ERROR)
                 from . import interactive

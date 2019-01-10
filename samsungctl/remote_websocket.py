@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 import base64
 import json
 import logging
@@ -12,7 +13,7 @@ import time
 from . import exceptions
 from . import application
 from . import wake_on_lan
-
+from .utils import LogIt, LogItWithReturn
 
 logger = logging.getLogger('samsungctl')
 
@@ -24,6 +25,7 @@ SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 class RemoteWebsocket(object):
     """Object for remote control connection."""
 
+    @LogIt
     def __init__(self, config):
         if sys.platform.startswith('win'):
             path = os.path.join(os.path.expandvars('%appdata%'), 'samsungctl')
@@ -53,6 +55,7 @@ class RemoteWebsocket(object):
         self._running = False
 
     @property
+    @LogItWithReturn
     def mac_address(self):
         if self._mac_address is None:
             _mac_address = wake_on_lan.get_mac_address(self.config['host'])
@@ -64,10 +67,12 @@ class RemoteWebsocket(object):
         return self._mac_address
 
     @property
+    @LogItWithReturn
     def power(self):
         return self.sock is not None
 
     @power.setter
+    @LogIt
     def power(self, value):
         self._power_event.clear()
 
@@ -120,6 +125,7 @@ class RemoteWebsocket(object):
         del self._registered_callbacks[:]
         self._thread = None
 
+    @LogIt
     def open(self):
         with self.receive_lock:
             token = ''
@@ -248,12 +254,14 @@ class RemoteWebsocket(object):
     def __exit__(self, type, value, traceback):
         self.close()
 
+    @LogIt
     def close(self):
         """Close the connection."""
         if self.sock is not None:
             self._loop_event.set()
             self.sock.close()
 
+    @LogIt
     def send(self, method, **params):
         if self.sock is None:
             logger.info('Is the TV on???')
@@ -265,6 +273,7 @@ class RemoteWebsocket(object):
         )
         self.sock.send(json.dumps(payload))
 
+    @LogIt
     def control(self, key, cmd='Click'):
         """
         Send a control command.
@@ -300,26 +309,33 @@ class RemoteWebsocket(object):
 
     _key_interval = 0.5
 
+    @LogItWithReturn
     def get_application(self, pattern):
         for app in self.applications:
             if pattern in (app.app_id, app.name):
                 return app
 
     @property
+    @LogItWithReturn
     def applications(self):
         eden_event = threading.Event()
         installed_event = threading.Event()
 
-        app_data = [[], []]
+        eden_data = []
+        installed_data = []
 
+        @LogIt
         def eden_app_get(data):
+            logger.debug('eden apps: ' + str(data))
             if 'data' in data:
-                app_data[0] = data['data']['data']
+                eden_data.extend(data['data']['data'])
             eden_event.set()
 
+        @LogIt
         def installed_app_get(data):
+            logger.debug('installed apps: ' + str(data))
             if 'data' in data:
-                app_data[1] = data['data']
+                installed_data.extend(data['data']['data'])
             installed_event.set()
 
         self.register_receive_callback(
@@ -347,12 +363,12 @@ class RemoteWebsocket(object):
         installed_event.wait(2.0)
 
         if not eden_event.isSet():
+
             self.unregister_receive_callback(
                 eden_app_get,
                 'event',
                 'ed.edenApp.get'
             )
-
             logger.debug('ed.edenApp.get timed out')
 
         if not installed_event.isSet():
@@ -363,24 +379,41 @@ class RemoteWebsocket(object):
             )
             logger.debug('ed.installedApp.get timed out')
 
-        for app_1 in app_data[1]:
-            for app_2 in app_data[0]:
-                if app_1['appId'] == app_2['appId']:
-                    app_1.update(app_2)
+        if eden_data and installed_data:
+            updated_apps = []
 
-        res = []
-        for app in app_data[1]:
-            res += [application.Application(self, **app)]
+            for eden_app in eden_data[:]:
+                for installed_app in installed_data[:]:
+                    if eden_app['appId'] == installed_app['appId']:
+                        installed_data.remove(installed_app)
+                        eden_data.remove(eden_app)
+                        eden_app.update(installed_app)
+                        updated_apps += [eden_app]
+                        break
+        else:
+            updated_apps = []
 
-        return res
+        updated_apps += eden_data + installed_data
 
+        for app in updated_apps[:]:
+            updated_apps.remove(app)
+            updated_apps += [application.Application(self, **app)]
+
+
+        logger.debug('applications return')
+
+        return updated_apps
+
+    @LogIt
     def register_receive_callback(self, callback, key, data):
         self._registered_callbacks += [[callback, key, data]]
 
+    @LogIt
     def unregister_receive_callback(self, callback, key, data):
         if [callback, key, data] in self._registered_callbacks:
             self._registered_callbacks.remove([callback, key, data])
-
+    
+    @LogIt
     def on_message(self, message):
         response = json.loads(message)
         logger.debug('incoming message: ' + message)
@@ -389,7 +422,8 @@ class RemoteWebsocket(object):
             if key in response and (data is None or response[key] == data):
                 callback(response)
                 self._registered_callbacks.remove([callback, key, data])
-
+      
+    @LogIt
     def start_voice_recognition(self):
         """Activates voice recognition."""
         with self.receive_lock:
@@ -423,6 +457,7 @@ class RemoteWebsocket(object):
                 )
                 logger.debug('ms.voiceApp.standby timed out')
 
+    @LogIt
     def stop_voice_recognition(self):
         """Activates voice recognition."""
 
@@ -465,12 +500,14 @@ class RemoteWebsocket(object):
         return base64.b64encode(string).decode("utf-8")
 
     @property
+    @LogItWithReturn
     def mouse(self):
         return Mouse(self)
 
 
 class Mouse(object):
 
+    @LogIt
     def __init__(self, remote):
         self._remote = remote
         self._is_running = False
@@ -481,13 +518,16 @@ class Mouse(object):
         self._send_event = threading.Event()
 
     @property
+    @LogItWithReturn
     def is_running(self):
         return self._is_running
 
+    @LogIt
     def clear(self):
         if not self.is_running:
             del self._commands[:]
 
+    @LogIt
     def _send(self, cmd, **kwargs):
         """Send a control command."""
 
@@ -496,7 +536,7 @@ class Mouse(object):
 
         if not self.is_running:
             params = {
-                "Cmd":          cmd,
+                "Cmd": cmd,
                 "TypeOfRemote": "ProcessMouseDevice"
             }
             params.update(kwargs)
@@ -508,12 +548,15 @@ class Mouse(object):
 
             self._commands += [payload]
 
+    @LogIt
     def left_click(self):
         self._send('LeftClick')
 
+    @LogIt
     def right_click(self):
         self._send('RightClick')
 
+    @LogIt
     def move(self, x, y):
         position = dict(
             x=x,
@@ -523,10 +566,12 @@ class Mouse(object):
 
         self._send('Move', Position=position)
 
+    @LogIt
     def add_wait(self, wait):
         if self._is_running:
             self._commands += [wait]
-
+    
+    @LogIt
     def stop(self):
         if self.is_running:
             self._send_event.set()
@@ -534,6 +579,7 @@ class Mouse(object):
             self._ime_update_event.set()
             self._touch_enable_event.set()
 
+    @LogIt
     def run(self):
         if self._remote.sock is None:
             logger.error('Is the TV on??')
@@ -548,13 +594,14 @@ class Mouse(object):
             self._is_running = True
 
             with self._remote.receive_lock:
-
+              
+                @LogIt
                 def imeStart(_):
                     self._ime_start_event.set()
-
+                @LogIt
                 def imeUpdate(_):
                     self._ime_update_event.set()
-
+                @LogIt
                 def touchEnable(_):
                     self._touch_enable_event.set()
 
