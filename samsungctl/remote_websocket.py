@@ -25,7 +25,6 @@ class RemoteWebsocket(object):
     """Object for remote control connection."""
 
     def __init__(self, config):
-
         if sys.platform.startswith('win'):
             path = os.path.join(os.path.expandvars('%appdata%'), 'samsungctl')
         else:
@@ -51,8 +50,7 @@ class RemoteWebsocket(object):
         self._thread = None
         self._mac_address = None
         self.sock = None
-
-        self.open()
+        self._running = False
 
     @property
     def mac_address(self):
@@ -242,6 +240,8 @@ class RemoteWebsocket(object):
                 self.close()
                 raise RuntimeError('Auth Failure')
 
+            self._running = True
+
     def __enter__(self):
         return self
 
@@ -273,6 +273,18 @@ class RemoteWebsocket(object):
         'Press'
         'Release'
         """
+
+        if key == 'KEY_POWERON' and not self.power:
+            self.power = True
+            return
+
+        if key == 'KEY_POWER' and not self.power:
+            self.power = True
+            return
+
+        if not self._running:
+            self.open()
+
         with self.receive_lock:
             event = threading.Event()
             params = dict(
@@ -310,8 +322,16 @@ class RemoteWebsocket(object):
                 app_data[1] = data['data']
             installed_event.set()
 
-        self.register_receive_callback(eden_app_get, 'event', 'ed.edenApp.get')
-        self.register_receive_callback(installed_app_get, 'data', None)
+        self.register_receive_callback(
+            eden_app_get,
+            'event',
+            'ed.edenApp.get'
+        )
+        self.register_receive_callback(
+            installed_app_get,
+            'event',
+            'ed.installedApp.get'
+        )
 
         for event in ['ed.edenApp.get', 'ed.installedApp.get']:
 
