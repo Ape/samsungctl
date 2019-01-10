@@ -283,17 +283,23 @@ class RemoteWebsocket(object):
         'Release'
         """
 
-        if key == 'KEY_POWERON' and not self.power:
-            self.power = True
-            return
-
-        if key == 'KEY_POWER' and not self.power:
-            self.power = True
-            return
-
         if not self._running:
-            self.open()
+            if key in ('KEY_POWERON', 'KEY_POWER'):
+                try:
+                    self.open()
+                except RuntimeError:
+                    self.power = True
+                    return
+            else:
+                self.open()
 
+        if key == 'KEY_POWER':
+            if self.power:
+                self.power = False
+            else:
+                self.power = True
+            return
+        
         with self.receive_lock:
             event = threading.Event()
             params = dict(
@@ -399,8 +405,7 @@ class RemoteWebsocket(object):
             updated_apps.remove(app)
             updated_apps += [application.Application(self, **app)]
 
-
-        logger.debug('applications return')
+        logger.debug('applications returned: ' + str(updated_apps))
 
         return updated_apps
 
@@ -412,7 +417,7 @@ class RemoteWebsocket(object):
     def unregister_receive_callback(self, callback, key, data):
         if [callback, key, data] in self._registered_callbacks:
             self._registered_callbacks.remove([callback, key, data])
-    
+
     @LogIt
     def on_message(self, message):
         response = json.loads(message)
@@ -422,7 +427,7 @@ class RemoteWebsocket(object):
             if key in response and (data is None or response[key] == data):
                 callback(response)
                 self._registered_callbacks.remove([callback, key, data])
-      
+
     @LogIt
     def start_voice_recognition(self):
         """Activates voice recognition."""
@@ -570,7 +575,7 @@ class Mouse(object):
     def add_wait(self, wait):
         if self._is_running:
             self._commands += [wait]
-    
+
     @LogIt
     def stop(self):
         if self.is_running:
@@ -594,7 +599,7 @@ class Mouse(object):
             self._is_running = True
 
             with self._remote.receive_lock:
-              
+
                 @LogIt
                 def imeStart(_):
                     self._ime_start_event.set()
