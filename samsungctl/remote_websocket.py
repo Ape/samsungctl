@@ -204,11 +204,19 @@ class RemoteWebsocket(object):
         def installed_app_get(data):
             logger.debug('installed apps: ' + str(data))
             if 'data' in data:
-                installed_data.extend(data['data'])
+                installed_data.extend(data['data']['data'])
             installed_event.set()
 
-        self.register_receive_callback(eden_app_get, 'event', 'ed.edenApp.get')
-        self.register_receive_callback(installed_app_get, 'data', None)
+        self.register_receive_callback(
+            eden_app_get,
+            'event',
+            'ed.edenApp.get'
+        )
+        self.register_receive_callback(
+            installed_app_get,
+            'event',
+            'ed.installedApp.get'
+        )
 
         for event in ['ed.edenApp.get', 'ed.installedApp.get']:
 
@@ -367,7 +375,7 @@ class Mouse(object):
 
         if not self.is_running:
             params = {
-                "Cmd":          cmd,
+                "Cmd": cmd,
                 "TypeOfRemote": "ProcessMouseDevice"
             }
             params.update(kwargs)
