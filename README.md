@@ -116,7 +116,8 @@ arguments:
 ```
 usage: samsungctl [-h] [--version] [-v] [-q] [-i] [--host HOST] [--port PORT]
                   [--method METHOD] [--name NAME] [--description DESC]
-                  [--id ID] [--timeout TIMEOUT] [--key-help]
+                  [--id ID] [--timeout TIMEOUT] [--start-app APP NAME OR ID]
+                  [--app-metadata METADATA] [--key-help]
                   [key [key ...]]
 
 Remote control Samsung televisions via TCP/IP connection
@@ -140,6 +141,14 @@ optional argument|description
 --description DESC|remote control description
 --id ID|remote control id
 --timeout TIMEOUT|socket timeout in seconds \(0 = no timeout\)
+--start-app APPPLICATION NAME OR ID|starts an application
+--app-metadata METADATA|string of information the application can use
+when it starts up.
+And example would be the browser.
+To have it open directly to a specific URL you would enter: "
+"http\/\/www.some-web-address.com"
+wrapping the meta data in quotes will reduce the possibility of a
+command line parser error.
 --key-help {OPTIONAL KEYS}|prints out key help
 
 ```
