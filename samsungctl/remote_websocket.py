@@ -69,11 +69,23 @@ class RemoteWebsocket(object):
     @property
     @LogItWithReturn
     def power(self):
+        if not self._running:
+            try:
+                self.open()
+            except RuntimeError:
+                pass
+
         return self.sock is not None
 
     @power.setter
     @LogIt
     def power(self, value):
+        if not self._running:
+            try:
+                self.open()
+            except RuntimeError:
+                pass
+
         self._power_event.clear()
 
         if value and self.sock is None:
@@ -95,15 +107,25 @@ class RemoteWebsocket(object):
 
         elif not value and self.sock is not None:
             self.control('KEY_POWEROFF')
-            self._power_event.wait(1.0)
+            self._power_event.wait(5.0)
 
             if not self._power_event.isSet():
                 logger.info(
                     'unable to power off TV using command KEY_POWEROFF. '
                     'Trying command KEY_POWER'
                 )
-                self.control('KEY_POWER')
-                self._power_event.wait(1.0)
+                with self.receive_lock:
+                    params = dict(
+                        Cmd='Click',
+                        DataOfCmd='KEY_POWER',
+                        Option="false",
+                        TypeOfRemote="SendRemoteKey"
+                    )
+
+                    logger.info("Sending control command: " + str(params))
+                    self.send("ms.remote.control", **params)
+
+                self._power_event.wait(5.0)
 
             if not self._power_event.isSet():
                 logger.error('Unable to power off the TV')
@@ -284,14 +306,14 @@ class RemoteWebsocket(object):
         """
 
         if not self._running:
-            if key in ('KEY_POWERON', 'KEY_POWER'):
-                try:
-                    self.open()
-                except RuntimeError:
+            try:
+                self.open()
+            except RuntimeError:
+                if key in ('KEY_POWERON', 'KEY_POWER'):
                     self.power = True
                     return
-            else:
-                self.open()
+                else:
+                    raise
 
         if key == 'KEY_POWER':
             if self.power:
@@ -299,7 +321,11 @@ class RemoteWebsocket(object):
             else:
                 self.power = True
             return
-        
+
+        if key == 'KEY_POWERON':
+            self.power = True
+            return
+
         with self.receive_lock:
             event = threading.Event()
             params = dict(
