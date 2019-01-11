@@ -110,6 +110,11 @@ class Application(object):
 
         return response['running']
 
+    def get_category(self, title):
+        for group in self:
+            if group.title == title:
+                return group
+
     @LogIt
     def run(self, meta_tag=None):
         params = dict(
@@ -182,6 +187,11 @@ class Accelerator(object):
         self.application = application
         self.title = title
         self._app_datas = appDatas
+
+    def get_content(self, title):
+        for content in self:
+            if content.title == title:
+                return content
 
     def __iter__(self):
         content = dict(

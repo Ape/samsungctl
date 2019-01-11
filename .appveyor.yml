@@ -1,0 +1,41 @@
+
+environment:
+  DEBUG: 0
+
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PYTHON: "C:\\Python36"
+      PYTHON_VERSION: "3.6.x"
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x"
+
+matrix:
+  fast_finish: true
+
+
+install:
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+          throw "There are newer queued builds for this pull request, failing early." }
+
+  - ps: Write-Host "PYTHON_VERSION $env:PYTHON_VERSION"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "python -m pip install --disable-pip-version-check --user --upgrade pip"
+  - "python -m pip install nose"
+
+build_script:
+    - "python setup.py install"
+
+test_script:
+   - "nosetests --verbose tests"
+
+on_finish:
+  # pause the build execution
+  - ps: |
+      if ($Env:DEBUG -eq "1") {
+          $blockRdp = $true
+          iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+      }
