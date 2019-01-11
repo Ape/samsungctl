@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 import inspect
+import sys
 from functools import update_wrapper
+
+PY3 = sys.version_info[0] > 2
 
 
 logger = logging.getLogger('samsungctl')
@@ -11,9 +14,12 @@ def LogIt(func):
     """
     Logs the function call, if debugging log level is set.
     """
-
-    if func.func_code.co_flags & 0x20:
-        raise TypeError("Can't wrap generator function")
+    if PY3:
+        if func.__code__.co_flags & 0x20:
+            raise TypeError("Can't wrap generator function")
+    else:
+        if func.func_code.co_flags & 0x20:
+            raise TypeError("Can't wrap generator function")
 
     def wrapper(*args, **kwargs):
         func_name, arg_string = func_arg_string(func, args, kwargs)
@@ -28,6 +34,13 @@ def LogItWithReturn(func):
     Logs the function call and return, if debugging log level is set.
     """
 
+    if PY3:
+        if func.__code__.co_flags & 0x20:
+            raise TypeError("Can't wrap generator function")
+    else:
+        if func.func_code.co_flags & 0x20:
+            raise TypeError("Can't wrap generator function")
+
     def wrapper(*args, **kwargs):
         func_name, arg_string = func_arg_string(func, args, kwargs)
         logging.debug(func_name + arg_string)
@@ -40,7 +53,10 @@ def LogItWithReturn(func):
 
 def func_arg_string(func, args, kwargs):
     class_name = ""
-    arg_names = inspect.getargspec(func)[0]
+    if PY3:
+        arg_names = inspect.getfullargspec(func)[0]
+    else:
+        arg_names = inspect.getargspec(func)[0]
     start = 0
     if arg_names:
         if arg_names[0] == "self":
