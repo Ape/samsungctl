@@ -132,8 +132,14 @@ class Application(object):
         return bool(self._is_lock)
 
     def __iter__(self):
-        for accelerator in self._accelerators:
-            yield Accelerator(self._remote, **accelerator)
+        accelerators = dict(
+            (accelerator['title'], accelerator)
+            for accelerator in self._accelerators
+            if accelerator['title'] is not None
+        )
+
+        for accelerator_name in sorted(list(accelerators.keys())):
+            yield Accelerator(self, **accelerators[accelerator_name])
 
     @property
     @LogIt
@@ -150,7 +156,7 @@ class Application(object):
             event = threading.Event()
 
             @LogIt
-            def callback(data):
+            def app_icon_callback(data):
                 data = data['imageBase64']
                 if data is not None:
                     data = base64.decodestring(data)
@@ -158,9 +164,9 @@ class Application(object):
                 event.set()
 
             self._remote.register_receive_callback(
-                callback,
-                'iconPath',
-                self._icon
+                app_icon_callback,
+                'event',
+                'ed.apps.icon'
             )
 
             self._remote.send("ms.channel.emit", **params)
@@ -172,14 +178,19 @@ class Application(object):
 class Accelerator(object):
 
     @LogIt
-    def __init__(self, remote, title, appDatas):
-        self._remote = remote
+    def __init__(self, application, title, appDatas):
+        self.application = application
         self.title = title
         self._app_datas = appDatas
 
     def __iter__(self):
-        for app_data in self._app_datas:
-            yield AppData(self._remote, **app_data)
+        content = dict(
+            (app_data['title'], app_data) for app_data in self._app_datas
+            if app_data['title'] is not None
+        )
+
+        for content_name in sorted(list(content.keys())):
+            yield AppData(self.application, **content[content_name])
 
 
 class AppData(object):
@@ -187,7 +198,7 @@ class AppData(object):
     @LogIt
     def __init__(
         self,
-        remote,
+        application,
         isPlayable=None,
         subtitle=None,
         appType=None,
@@ -209,7 +220,7 @@ class AppData(object):
         icon=None
     ):
 
-        self._remote = remote
+        self.application = application
         self._is_playable = isPlayable
         self.subtitle = subtitle
         self.app_type = appType
@@ -237,20 +248,17 @@ class AppData(object):
 
     @LogIt
     def run(self):
-        if self.is_playable and self.action_type:
-            params = dict(
-                event='ed.apps.launch',
-                to='host',
-                data=dict(
-                    appId=self.app_id,
-                    action_type=self.action_type
-                )
-            )
+        if self.is_playable:
 
             if self.action_play_url:
-                params['data']['metaTag'] = self.action_play_url
+                if isinstance(self.action_play_url, dict):
+                    meta_tag = json.dumps(self.action_play_url)
+                else:
+                    meta_tag = self.action_play_url
+            else:
+                meta_tag = None
 
-            self._remote.send('ms.channel.emit', **params)
+            self.application.run(meta_tag)
 
     @property
     def icon(self):
@@ -261,25 +269,24 @@ class AppData(object):
                 data=dict(iconPath=self._icon)
 
             )
-
             icon = [None]
             event = threading.Event()
 
             @LogIt
-            def callback(data):
+            def content_icon_callback(data):
                 data = data['imageBase64']
                 if data is not None:
                     data = base64.decodestring(data)
                 icon[0] = data
                 event.set()
 
-            self._remote.register_receive_callback(
-                callback,
-                'iconPath',
-                self._icon
+            self.application._remote.register_receive_callback(
+                content_icon_callback,
+                'event',
+                'ed.apps.icon'
             )
 
-            self._remote.send("ms.channel.emit", **params)
+            self.application._remote.send("ms.channel.emit", **params)
 
             event.wait(3.0)
             return icon[0]

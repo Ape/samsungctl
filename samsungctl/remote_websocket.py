@@ -177,7 +177,7 @@ class RemoteWebsocket(object):
             if self.sock is not None:
                 self.close()
 
-            if token or self.config['port'] == 8002:
+            if self.config['port'] == 8002:
                 self.config['port'] = 8002
                 sslopt = {"cert_reqs": ssl.CERT_NONE}
                 url = SSL_URL_FORMAT.format(
