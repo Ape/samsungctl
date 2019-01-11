@@ -16,22 +16,9 @@ import socket
 
 from . import responses
 
-
 logger = logging.getLogger('samsungctl')
 logger.addHandler(logging.NullHandler())
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
-
-base_path = os.path.dirname(__file__)
-
-if not base_path:
-    base_path = os.path.dirname(sys.argv[0])
-
-if not base_path:
-    base_path = os.getcwd()
-
-sys.path.insert(0, os.path.join(base_path, '..'))
-
-import samsungctl
 
 URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
@@ -3532,5 +3519,21 @@ class LegacyTest(unittest.TestCase):
         self.connection_event.set()
 
 if __name__ == '__main__':
+
+    base_path = os.path.dirname(__file__)
+
+    if not base_path:
+        base_path = os.path.dirname(sys.argv[0])
+
+    if not base_path:
+        base_path = os.getcwd()
+
+    sys.path.insert(0, os.path.join(base_path, '..'))
+
+    import samsungctl
+
     sys.argv.append()
     unittest.main()
+
+else:
+    import samsungctl
