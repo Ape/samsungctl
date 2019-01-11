@@ -132,8 +132,14 @@ class Application(object):
         return bool(self._is_lock)
 
     def __iter__(self):
-        for accelerator in self._accelerators:
-            yield Accelerator(self, **accelerator)
+        accelerators = dict(
+            (accelerator['title'], accelerator)
+            for accelerator in self._accelerators
+            if accelerator['title'] is not None
+        )
+
+        for accelerator_name in sorted(list(accelerators.keys())):
+            yield Accelerator(self, **accelerators[accelerator_name])
 
     @property
     @LogIt
@@ -178,8 +184,13 @@ class Accelerator(object):
         self._app_datas = appDatas
 
     def __iter__(self):
-        for app_data in self._app_datas:
-            yield AppData(self.application, **app_data)
+        content = dict(
+            (app_data['title'], app_data) for app_data in self._app_datas
+            if app_data['title'] is not None
+        )
+
+        for content_name in sorted(list(content.keys())):
+            yield AppData(self.application, **content[content_name])
 
 
 class AppData(object):
