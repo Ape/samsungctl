@@ -21,7 +21,4 @@ __author__ = "Lauri Niskanen, Kevin Schlosser"
 __author_email__ = "kevin.g.schlosser@gmail.com"
 __license__ = "MIT"
 
-try:
-    from .remote import Remote # NOQA
-except ImportError:
-    pass
+from .remote import Remote # NOQA
