@@ -32,7 +32,8 @@ build_script:
     - "python setup.py install"
 
 test_script:
-   - "nosetests --verbose tests"
+   # - "nosetests --verbose tests"
+   - "python \tests\__init__.py"
 
 on_finish:
   # pause the build execution
