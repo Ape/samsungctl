@@ -14,7 +14,10 @@ import uuid
 import logging
 import socket
 
-import responses
+try:
+    import responses
+except ImportError:
+    from . import responses
 
 logger = logging.getLogger('samsungctl')
 logger.addHandler(logging.NullHandler())
@@ -2861,9 +2864,9 @@ class LegacyTest(unittest.TestCase):
             tv_name_len = bytearray.fromhex(hex(len(tv_name))[2:].zfill(2))
 
             while len(tv_name_len) < 3:
-                tv_name_len = '\x00' + tv_name_len
+                tv_name_len = bytearray(b'\x00') + tv_name_len
 
-            packet = tv_name_len + tv_name + b"\x00\x04\x00\x00\x00\x00"
+            packet = tv_name_len + tv_name.encode() + "\x00\x04\x00\x00\x00\x00".encode()
 
             self.client.send(packet)
             event.set()
@@ -3509,10 +3512,10 @@ class LegacyTest(unittest.TestCase):
         tv_name_len = bytearray.fromhex(hex(len(tv_name))[2:].zfill(2))
 
         while len(tv_name_len) < 3:
-            tv_name_len = '\x00' + tv_name_len
+            tv_name_len = bytearray(b'\x00') + tv_name_len
 
-        packet1 = tv_name_len + tv_name + b"\x00\x01\x0a"
-        packet2 = tv_name_len + tv_name + b"\x00\x04\x64\x00\x01\x00"
+        packet1 = tv_name_len + tv_name.encode() + "\x00\x01\x0a".encode()
+        packet2 = tv_name_len + tv_name.encode() + "\x00\x04\x64\x00\x01\x00".encode()
 
         self.client.send(packet1)
         self.client.send(packet2)
