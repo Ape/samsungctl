@@ -27,7 +27,9 @@ install:
   # - "python -m pip install nose"
   - "python -m pip install --upgrade setuptools"
   - "python -m pip install --upgrade pip"
-  - "python setup.py install"
+
+build_script:
+    - "python setup.py install"
 
 test_script:
    # - "nosetests --verbose tests"
