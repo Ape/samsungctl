@@ -14,7 +14,7 @@ import uuid
 import logging
 import socket
 
-from . import responses
+import responses
 
 logger = logging.getLogger('samsungctl')
 logger.addHandler(logging.NullHandler())
