@@ -3532,7 +3532,6 @@ if __name__ == '__main__':
 
     import samsungctl
 
-    sys.argv.append()
     unittest.main()
 
 else:
