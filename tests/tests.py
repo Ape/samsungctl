@@ -886,47 +886,18 @@ class WebSocketTest(unittest.TestCase):
 
             if message['params']['event'] == 'ed.edenApp.get':
                 self.assertEqual(eden_message, message)
-                eden_event.set()
                 return responses.EDEN_APP_RESPONSE
+
             elif message['params']['event'] == 'ed.installedApp.get':
                 self.assertEqual(installed_message, message)
-                installed_event.set()
                 return responses.INSTALLED_APP_RESPONSE
 
-        eden_event = threading.Event()
-        installed_event = threading.Event()
-        application_event = threading.Event()
         self.client.on_message = on_message
-
-        def do():
-            try:
-                WebSocketTest.applications = self.remote.applications[:]
-            except:
-                import traceback
-                traceback.print_exc()
-                self.skipTest('get applications failed')
-
-            application_event.set()
-
-        t = threading.Thread(target=do)
-        t.daemon = True
-        t.start()
-
-        eden_event.wait(15.0)
-        installed_event.wait(15.0)
-        if not eden_event.isSet() or not installed_event.isSet():
-            self.skipTest('timed out')
-        else:
-            application_event.wait()
-
-            if not application_event.isSet():
-                self.skipTest('no applications received')
-
-            else:
-                if not self.applications:
-                    self.skipTest('no applications received')
-
+        WebSocketSSLTest.applications = self.remote.applications[:]
         self.client.on_message = None
+
+        if not self.applications:
+            self.skipTest('no applications received')
 
     def test_0301_CHECK_APPLICATION_NAMES(self):
         if self.remote is None:
@@ -944,12 +915,6 @@ class WebSocketTest(unittest.TestCase):
                 else:
                     unknown_names += [[app.name, app.id]]
 
-            if unknown_names:
-                print('unknown apps: ' + str(unknown_names))
-
-            if app_names:
-                print('unused apps: ' + str(app_names))
-
     def test_0302_CHECK_APPLICATION_IDS(self):
         if self.remote is None:
             self.skipTest('no connection')
@@ -966,446 +931,275 @@ class WebSocketTest(unittest.TestCase):
                 else:
                     unknown_ids += [[app.name, app.id]]
 
-            if unknown_ids:
-                print('unknown apps: ' + str(unknown_ids))
-
-            if app_ids:
-                print('unused apps: ' + str(app_ids))
-
     def test_0303_GET_APPLICATION(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
-                    )
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
                 )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
 
-            def do():
-                try:
-                    if self.remote.get_application('Netflix') is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                except:
-                    import traceback
-
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        if app is None:
+            self.skipTest('get application failed')
 
     def test_0304_LAUNCH_APPLICATION(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
+                )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
+                )
+            )
+
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
+
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
+
+        if app is None:
+            self.skipTest('get application failed')
+            return
+
+        event = threading.Event()
+
+        def on_message(message):
+            expected_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    event='ed.apps.launch',
+                    to='host',
+                    data=dict(
+                        appId='11101200001',
+                        action_type='DEEP_LINK'
                     )
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
-                )
+            )
+            self.assertEqual(expected_message, message)
+            event.set()
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+        self.client.on_message = on_message
+        app.run()
+        self.client.on_message = None
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
-
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-
-                        event = threading.Event()
-
-                        def on_message(message):
-                            expected_message = dict(
-                                method='ms.channel.emit',
-                                params=dict(
-                                    event='ed.apps.launch',
-                                    to='host',
-                                    data=dict(
-                                        appId='11101200001',
-                                        action_type='DEEP_LINK'
-                                    )
-                                )
-                            )
-                            self.assertEqual(expected_message, message)
-                            event.set()
-
-                        self.client.on_message = on_message
-
-                        event.wait(15.0)
-                        if not event.isSet():
-                            self.skipTest('timed out')
-
-                        self.client.on_message = None
-                except:
-                    import traceback
-
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        event.wait(15.0)
+        if not event.isSet():
+            self.skipTest('timed out')
 
     def test_0305_GET_CONTENT_CATEGORY(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
-                    )
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
                 )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
 
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
+        if app is None:
+            self.skipTest('get application failed')
+            return
 
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-                        if app.get_category('Trending Now') is None:
-                            application_event.set()
-                            self.skipTest('get category failed')
-                except:
-                    import traceback
-
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        category = app.get_category('Trending Now')
+        if category is None:
+            self.skipTest('get category failed')
+            return
 
     def test_0306_GET_CONTENT(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
-                    )
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
+            )
+
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
                 )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
 
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
+        if app is None:
+            self.skipTest('get application failed')
+            return
 
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-                        category = app.get_category('Trending Now')
+        category = app.get_category('Trending Now')
+        if category is None:
+            self.skipTest('get category failed')
+            return
 
-                        if category is None:
-                            application_event.set()
-                            self.skipTest('get category failed')
-                        else:
-                            if category.get_content(
-                                'How the Grinch Stole Christmas') is None:
-                                application_event.set()
-                                self.skipTest('get content failed')
-                except:
-                    import traceback
-
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        content = category.get_content('How the Grinch Stole Christmas')
+        if content is None:
+            self.skipTest('get content failed')
 
     def test_0307_PLAY_CONTENT(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
+                )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
+                )
+            )
+
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
+
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
+
+        if app is None:
+            self.skipTest('get application failed')
+            return
+
+        category = app.get_category('Trending Now')
+        if category is None:
+            self.skipTest('get category failed')
+            return
+
+        content = category.get_content('How the Grinch Stole Christmas')
+        if content is None:
+            self.skipTest('get content failed')
+            return
+
+        event = threading.Event()
+
+        def on_message(message):
+            expected_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    event='ed.apps.launch',
+                    to='host',
+                    data=dict(
+                        appId='11101200001',
+                        action_type='DEEP_LINK',
+                        metaTag=(
+                            'm=60000901&trackId=254080000&&source_type_payload'
+                            '=groupIndex%3D2%26tileIndex%3D6%26action%3Dmdp%26'
+                            'movieId%3D60000901%26trackId%3D254080000'
+                        )
                     )
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
-                )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            self.assertEqual(expected_message, message)
+            event.set()
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        content.run()
+        event.wait(15.0)
+        self.client.on_message = None
 
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
-
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-                        category = app.get_category('Trending Now')
-
-                        if category is None:
-                            application_event.set()
-                            self.skipTest('get category failed')
-                        else:
-                            content = category.get_content(
-                                'How the Grinch Stole Christmas')
-                            if content is None:
-                                application_event.set()
-                                self.skipTest('get content failed')
-
-                            else:
-                                event = threading.Event()
-
-                                def on_message(message):
-                                    expected_message = dict(
-                                        method='ms.channel.emit',
-                                        params=dict(
-                                            event='ed.apps.launch',
-                                            to='host',
-                                            data=dict(
-                                                appId='11101200001',
-                                                action_type='DEEP_LINK',
-                                                metaTag='m=60000901&trackId=254080000&&source_type_payload=groupIndex%3D2%26tileIndex%3D6%26action%3Dmdp%26movieId%3D60000901%26trackId%3D254080000'
-                                            )
-                                        )
-                                    )
-                                    self.assertEqual(expected_message, message)
-                                    event.set()
-
-                                self.client.on_message = on_message
-
-                                event.wait(15.0)
-                                if not event.isSet():
-                                    self.skipTest('timed out')
-
-                                self.client.on_message = None
-                except:
-                    import traceback
-
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
+        if not event.isSet():
+            self.skipTest('timed out')
 
     def test_999_DISCONNECT(self):
         if self.remote is None:
@@ -2196,47 +1990,18 @@ class WebSocketSSLTest(unittest.TestCase):
 
             if message['params']['event'] == 'ed.edenApp.get':
                 self.assertEqual(eden_message, message)
-                eden_event.set()
                 return responses.EDEN_APP_RESPONSE
+
             elif message['params']['event'] == 'ed.installedApp.get':
                 self.assertEqual(installed_message, message)
-                installed_event.set()
                 return responses.INSTALLED_APP_RESPONSE
 
-        eden_event = threading.Event()
-        installed_event = threading.Event()
-        application_event = threading.Event()
         self.client.on_message = on_message
-
-        def do():
-            try:
-                WebSocketSSLTest.applications = self.remote.applications[:]
-            except:
-                import traceback
-                traceback.print_exc()
-                self.skipTest('get applications failed')
-
-            application_event.set()
-
-        t = threading.Thread(target=do)
-        t.daemon = True
-        t.start()
-
-        eden_event.wait(15.0)
-        installed_event.wait(15.0)
-        if not eden_event.isSet() or not installed_event.isSet():
-            self.skipTest('timed out')
-        else:
-            application_event.wait()
-
-            if not application_event.isSet():
-                self.skipTest('no applications received')
-
-            else:
-                if not self.applications:
-                    self.skipTest('no applications received')
-
+        WebSocketSSLTest.applications = self.remote.applications[:]
         self.client.on_message = None
+
+        if not self.applications:
+            self.skipTest('no applications received')
 
     def test_0301_CHECK_APPLICATION_NAMES(self):
         if self.remote is None:
@@ -2254,12 +2019,6 @@ class WebSocketSSLTest(unittest.TestCase):
                 else:
                     unknown_names += [[app.name, app.id]]
 
-            if unknown_names:
-                print('unknown apps: ' + str(unknown_names))
-
-            if app_names:
-                print('unused apps: ' + str(app_names))
-
     def test_0302_CHECK_APPLICATION_IDS(self):
         if self.remote is None:
             self.skipTest('no connection')
@@ -2276,441 +2035,275 @@ class WebSocketSSLTest(unittest.TestCase):
                 else:
                     unknown_ids += [[app.name, app.id]]
 
-            if unknown_ids:
-                print('unknown apps: ' + str(unknown_ids))
-
-            if app_ids:
-                print('unused apps: ' + str(app_ids))
-
     def test_0303_GET_APPLICATION(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
-                    )
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
                 )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
 
-            def do():
-                try:
-                    if self.remote.get_application('Netflix') is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                except:
-                    import traceback
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        if app is None:
+            self.skipTest('get application failed')
 
     def test_0304_LAUNCH_APPLICATION(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
+                )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
+                )
+            )
+
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
+
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
+
+        if app is None:
+            self.skipTest('get application failed')
+            return
+
+        event = threading.Event()
+
+        def on_message(message):
+            expected_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    event='ed.apps.launch',
+                    to='host',
+                    data=dict(
+                        appId='11101200001',
+                        action_type='DEEP_LINK'
                     )
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
-                )
+            )
+            self.assertEqual(expected_message, message)
+            event.set()
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+        self.client.on_message = on_message
+        app.run()
+        self.client.on_message = None
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
-
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-
-                        event = threading.Event()
-
-                        def on_message(message):
-                            expected_message = dict(
-                                method='ms.channel.emit',
-                                params=dict(
-                                    event='ed.apps.launch',
-                                    to='host',
-                                    data=dict(
-                                        appId='11101200001',
-                                        action_type='DEEP_LINK'
-                                    )
-                                )
-                            )
-                            self.assertEqual(expected_message, message)
-                            event.set()
-
-                        self.client.on_message = on_message
-
-                        event.wait(15.0)
-                        if not event.isSet():
-                            self.skipTest('timed out')
-
-                        self.client.on_message = None
-                except:
-                    import traceback
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        event.wait(15.0)
+        if not event.isSet():
+            self.skipTest('timed out')
 
     def test_0305_GET_CONTENT_CATEGORY(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
-                    )
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
                 )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
 
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
+        if app is None:
+            self.skipTest('get application failed')
+            return
 
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-                        if app.get_category('Trending Now') is None:
-                            application_event.set()
-                            self.skipTest('get category failed')
-                except:
-                    import traceback
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        category = app.get_category('Trending Now')
+        if category is None:
+            self.skipTest('get category failed')
+            return
 
     def test_0306_GET_CONTENT(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
-                    )
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
+            )
+
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
                 )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
 
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
+        if app is None:
+            self.skipTest('get application failed')
+            return
 
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-                        category = app.get_category('Trending Now')
+        category = app.get_category('Trending Now')
+        if category is None:
+            self.skipTest('get category failed')
+            return
 
-                        if category is None:
-                            application_event.set()
-                            self.skipTest('get category failed')
-                        else:
-                            if category.get_content('How the Grinch Stole Christmas') is None:
-                                application_event.set()
-                                self.skipTest('get content failed')
-                except:
-                    import traceback
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        content = category.get_content('How the Grinch Stole Christmas')
+        if content is None:
+            self.skipTest('get content failed')
 
     def test_0307_PLAY_CONTENT(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            def on_message(message):
-                eden_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.edenApp.get',
-                        to='host'
+        def on_message(message):
+            eden_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.edenApp.get',
+                    to='host'
+                )
+            )
+            installed_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    data='',
+                    event='ed.installedApp.get',
+                    to='host'
+                )
+            )
+
+            if message['params']['event'] == 'ed.edenApp.get':
+                self.assertEqual(eden_message, message)
+                return responses.EDEN_APP_RESPONSE
+            elif message['params']['event'] == 'ed.installedApp.get':
+                self.assertEqual(installed_message, message)
+                return responses.INSTALLED_APP_RESPONSE
+
+        self.client.on_message = on_message
+        app = self.remote.get_application('Netflix')
+        self.client.on_message = None
+
+        if app is None:
+            self.skipTest('get application failed')
+            return
+
+        category = app.get_category('Trending Now')
+        if category is None:
+            self.skipTest('get category failed')
+            return
+
+        content = category.get_content('How the Grinch Stole Christmas')
+        if content is None:
+            self.skipTest('get content failed')
+            return
+
+        event = threading.Event()
+
+        def on_message(message):
+            expected_message = dict(
+                method='ms.channel.emit',
+                params=dict(
+                    event='ed.apps.launch',
+                    to='host',
+                    data=dict(
+                        appId='11101200001',
+                        action_type='DEEP_LINK',
+                        metaTag=(
+                            'm=60000901&trackId=254080000&&source_type_payload'
+                            '=groupIndex%3D2%26tileIndex%3D6%26action%3Dmdp%26'
+                            'movieId%3D60000901%26trackId%3D254080000'
+                        )
                     )
                 )
-                installed_message = dict(
-                    method='ms.channel.emit',
-                    params=dict(
-                        data='',
-                        event='ed.installedApp.get',
-                        to='host'
-                    )
-                )
+            )
 
-                if message['params']['event'] == 'ed.edenApp.get':
-                    self.assertEqual(eden_message, message)
-                    eden_event.set()
-                    return responses.EDEN_APP_RESPONSE
-                elif message['params']['event'] == 'ed.installedApp.get':
-                    self.assertEqual(installed_message, message)
-                    installed_event.set()
-                    return responses.INSTALLED_APP_RESPONSE
+            self.assertEqual(expected_message, message)
+            event.set()
 
-            eden_event = threading.Event()
-            installed_event = threading.Event()
-            application_event = threading.Event()
-            self.client.on_message = on_message
+        self.client.on_message = on_message
+        content.run()
+        event.wait(15.0)
+        self.client.on_message = None
 
-            def do():
-                try:
-                    app = self.remote.get_application('Netflix')
-
-                    if app is None:
-                        application_event.set()
-                        self.skipTest('get application failed')
-                    else:
-                        category = app.get_category('Trending Now')
-
-                        if category is None:
-                            application_event.set()
-                            self.skipTest('get category failed')
-                        else:
-                            content = category.get_content('How the Grinch Stole Christmas')
-                            if content is None:
-                                application_event.set()
-                                self.skipTest('get content failed')
-
-                            else:
-                                event = threading.Event()
-
-                                def on_message(message):
-                                    expected_message = dict(
-                                        method='ms.channel.emit',
-                                        params=dict(
-                                            event='ed.apps.launch',
-                                            to='host',
-                                            data=dict(
-                                                appId='11101200001',
-                                                action_type='DEEP_LINK',
-                                                metaTag='m=60000901&trackId=254080000&&source_type_payload=groupIndex%3D2%26tileIndex%3D6%26action%3Dmdp%26movieId%3D60000901%26trackId%3D254080000'
-                                            )
-                                        )
-                                    )
-                                    self.assertEqual(expected_message, message)
-                                    event.set()
-
-                                self.client.on_message = on_message
-
-                                event.wait(15.0)
-                                if not event.isSet():
-                                    self.skipTest('timed out')
-
-                                self.client.on_message = None
-                except:
-                    import traceback
-
-                    traceback.print_exc()
-                    application_event.set()
-                    self.skipTest('get application failed')
-
-                application_event.set()
-
-            t = threading.Thread(target=do)
-            t.daemon = True
-            t.start()
-
-            eden_event.wait(15.0)
-            installed_event.wait(15.0)
-            if not eden_event.isSet() or not installed_event.isSet():
-                self.skipTest('timed out')
-            else:
-                application_event.wait()
-
-                if not application_event.isSet():
-                    self.skipTest('no applications received')
-
-            self.client.on_message = None
+        if not event.isSet():
+            self.skipTest('timed out')
 
     def test_999_DISCONNECT(self):
         if self.remote is None:

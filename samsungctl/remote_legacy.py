@@ -73,7 +73,6 @@ class RemoteLegacy(object):
     @LogIt
     def _read_response(self, first_time=False):
         header = self.connection.recv(3)
-        print(repr(header))
         tv_name_len = int(codecs.encode(header[1:3], 'hex'), 16)
         tv_name = self.connection.recv(tv_name_len)
 
