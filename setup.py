@@ -1,22 +1,27 @@
 #!/usr/bin/env python
-
 import setuptools # NOQA
-import samsungctl # NOQA
+
+__title__ = "samsungctl"
+__version__ = "0.8.0b"
+__url__ = "https://github.com/kdschlosser/samsungctl"
+__author__ = "Lauri Niskanen, Kevin Schlosser"
+__author_email__ = "kevin.g.schlosser@gmail.com"
+__license__ = "MIT"
 
 setuptools.setup(
-    name=samsungctl.__title__,
-    version=samsungctl.__version__,
-    description=samsungctl.__doc__,
-    url=samsungctl.__url__,
-    author=samsungctl.__author__,
-    author_email=samsungctl.__author_email__,
-    license=samsungctl.__license__,
+    name=__title__,
+    version=__version__,
+    description=__doc__,
+    url=__url__,
+    author=__author__,
+    author_email=__author_email__,
+    license=__license__,
     long_description=open("README.md").read(),
     entry_points={
         "console_scripts": ["samsungctl=samsungctl.__main__:main"]
     },
     packages=["samsungctl"],
-    install_requires=["websocket-client"],
+    install_requires=["websocket-client", "requests"],
     extras_require={
         "interactive_ui": ["curses"],
     },
