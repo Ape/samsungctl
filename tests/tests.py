@@ -19,16 +19,25 @@ try:
 except ImportError:
     from . import responses
 
-logger = logging.getLogger('samsungctl')
-logger.addHandler(logging.NullHandler())
-logging.basicConfig(format="%(message)s", level=None)# logging.DEBUG)
+
+VERBOSE = 0
+
+for arg in list(sys.argv):
+    if arg.startswith('-v'):
+        VERBOSE = arg.count('v')
+
+if VERBOSE == 1:
+    LOG_LEVEL = logging.INFO
+elif VERBOSE == 2:
+    LOG_LEVEL = logging.DEBUG
+else:
+    LOG_LEVEL = logging.ERROR
 
 URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 TOKEN = ''.join(
     random.choice(string.digits + string.ascii_letters) for _ in range(20)
 )
-
 
 APP_NAMES = list(
     app['name'] for app in responses.INSTALLED_APP_RESPONSE['data']['data']
@@ -171,7 +180,7 @@ class WebSocketTest(unittest.TestCase):
         try:
             self.remote = WebSocketTest.remote = samsungctl.Remote(
                 self.config,
-                logging.DEBUG
+                LOG_LEVEL
             ).__enter__()
 
             self.remote.open()
@@ -1270,7 +1279,7 @@ class WebSocketSSLTest(unittest.TestCase):
         try:
             self.remote = WebSocketSSLTest.remote = samsungctl.Remote(
                 self.config,
-                logging.DEBUG
+                LOG_LEVEL
             ).__enter__()
 
             self.remote.open()
@@ -2428,7 +2437,7 @@ class LegacyTest(unittest.TestCase):
         try:
             self.remote = LegacyTest.remote = samsungctl.Remote(
                 self.config,
-                logging.DEBUG
+                LOG_LEVEL
             ).__enter__()
 
             self.connection_event.wait(2)
@@ -2463,7 +2472,11 @@ class LegacyTest(unittest.TestCase):
             while len(tv_name_len) < 3:
                 tv_name_len = bytearray(b'\x00') + tv_name_len
 
-            packet = tv_name_len + tv_name.encode() + "\x00\x04\x00\x00\x00\x00".encode()
+            packet = (
+                tv_name_len +
+                tv_name.encode() +
+                "\x00\x04\x00\x00\x00\x00".encode()
+            )
 
             self.client.send(packet)
             event.set()
@@ -3088,7 +3101,8 @@ class LegacyTest(unittest.TestCase):
             self.skipTest('no connection')
         else:
             self.remote.close()
-        self.client.close
+
+        self.client.close()
 
     def on_disconnect(self):
         pass
@@ -3118,6 +3132,7 @@ class LegacyTest(unittest.TestCase):
         self.client.send(packet2)
         self.connection_event.set()
 
+
 if __name__ == '__main__':
     base_path = os.path.dirname(__file__)
 
@@ -3131,7 +3146,11 @@ if __name__ == '__main__':
 
     import samsungctl
 
+    logger = logging.getLogger('samsungctl')
     unittest.main()
 
 else:
     import samsungctl
+
+    logger = logging.getLogger('samsungctl')
+
