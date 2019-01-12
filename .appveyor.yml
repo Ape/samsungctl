@@ -33,7 +33,7 @@ build_script:
 
 test_script:
    # - "nosetests --verbose tests"
-   - "python \tests\__init__.py"
+   - "python \tests\tests.py"
 
 on_finish:
   # pause the build execution
