@@ -25,9 +25,9 @@ class Application(object):
         sourceTypeNum=None,
         icon=None,
         id=None,
-        mbrSource=None
+        mbrSource=None,
+        **kwargs
     ):
-
         self._remote = remote
         self._is_lock = isLock
         self.name = name
@@ -44,6 +44,14 @@ class Application(object):
         self._icon = icon
         self.id = id
         self.mbr_source = mbrSource
+
+        self._kwargs = kwargs
+
+    def __getitem__(self, item):
+        if item in self._kwargs:
+            return self._kwargs[item]
+
+        raise KeyError(item)
 
     @property
     @LogItWithReturn
@@ -183,10 +191,17 @@ class Application(object):
 class Accelerator(object):
 
     @LogIt
-    def __init__(self, application, title, appDatas):
+    def __init__(self, application, title, appDatas, **kwargs):
         self.application = application
         self.title = title
         self._app_datas = appDatas
+        self._kwargs = kwargs
+
+    def __getitem__(self, item):
+        if item in self._kwargs:
+            return self._kwargs[item]
+
+        raise KeyError(item)
 
     def get_content(self, title):
         for content in self:
@@ -227,7 +242,8 @@ class AppData(object):
         mbrSource=0,
         id=None,
         subtitle3=None,
-        icon=None
+        icon=None,
+        **kwargs
     ):
 
         self.application = application
@@ -250,11 +266,18 @@ class AppData(object):
         self.id = id
         self.subtitle3 = subtitle3
         self._icon = icon
+        self._kwargs = kwargs
 
     @property
     @LogItWithReturn
     def is_playable(self):
         return bool(self._is_playable)
+
+    def __getitem__(self, item):
+        if item in self._kwargs:
+            return self._kwargs[item]
+
+        raise KeyError(item)
 
     @LogIt
     def run(self):

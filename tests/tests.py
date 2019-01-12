@@ -99,7 +99,7 @@ class FakeWebsocketClient(object):
         self.enable_multithread = None
         self.handler = handler
         self.callback = None
-        self.return_data = None
+        self.return_data = []
         self.on_connect = None
         self.on_message = None
         self.on_close = None
@@ -113,24 +113,24 @@ class FakeWebsocketClient(object):
         else:
             token = None
 
-        self.return_data = self.on_connect(token)
+        self.return_data += [self.on_connect(token)]
         self.recv_event.set()
         return self
 
     def send(self, data):
         if self.on_message is None:
             return
-        else:
-            self.return_data = self.on_message(json.loads(data))
 
-        if self.return_data is not None:
+        return_data = self.on_message(json.loads(data))
+
+        if return_data:
+            self.return_data += [return_data]
             self.recv_event.set()
 
     def recv(self):
         self.recv_event.wait()
         self.recv_event.clear()
-        response = json.dumps(self.return_data)
-        self.return_data = None
+        response = json.dumps(self.return_data.pop(0))
         return response
 
     def close(self):
@@ -1011,7 +1011,7 @@ class WebSocketTest(unittest.TestCase):
                     to='host',
                     data=dict(
                         appId='11101200001',
-                        action_type='DEEP_LINK'
+                        action_type='NATIVE_LAUNCH'
                     )
                 )
             )
@@ -1175,7 +1175,7 @@ class WebSocketTest(unittest.TestCase):
                     to='host',
                     data=dict(
                         appId='11101200001',
-                        action_type='DEEP_LINK',
+                        action_type='NATIVE_LAUNCH',
                         metaTag=(
                             'm=60000901&trackId=254080000&&source_type_payload'
                             '=groupIndex%3D2%26tileIndex%3D6%26action%3Dmdp%26'
@@ -2101,7 +2101,7 @@ class WebSocketSSLTest(unittest.TestCase):
                     to='host',
                     data=dict(
                         appId='11101200001',
-                        action_type='DEEP_LINK'
+                        action_type='NATIVE_LAUNCH'
                     )
                 )
             )
@@ -2265,7 +2265,7 @@ class WebSocketSSLTest(unittest.TestCase):
                     to='host',
                     data=dict(
                         appId='11101200001',
-                        action_type='DEEP_LINK',
+                        action_type='NATIVE_LAUNCH',
                         metaTag=(
                             'm=60000901&trackId=254080000&&source_type_payload'
                             '=groupIndex%3D2%26tileIndex%3D6%26action%3Dmdp%26'
