@@ -3119,7 +3119,6 @@ class LegacyTest(unittest.TestCase):
         self.connection_event.set()
 
 if __name__ == '__main__':
-
     base_path = os.path.dirname(__file__)
 
     if not base_path:
