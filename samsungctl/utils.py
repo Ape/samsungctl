@@ -66,7 +66,7 @@ def func_arg_string(func, args, kwargs):
     res = []
     append = res.append
 
-    for key, value in zip(arg_names, args)[start:]:
+    for key, value in list(zip(arg_names, args))[start:]:
         append(str(key) + "=" + repr(value))
 
     for key, value in kwargs.items():
