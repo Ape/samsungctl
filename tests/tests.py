@@ -21,7 +21,7 @@ except ImportError:
 
 logger = logging.getLogger('samsungctl')
 logger.addHandler(logging.NullHandler())
-logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+logging.basicConfig(format="%(message)s", level=None)# logging.DEBUG)
 
 URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 SSL_URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
@@ -140,6 +140,9 @@ class WebSocketTest(unittest.TestCase):
 
     @staticmethod
     def _serialize_string(s):
+
+        if not isinstance(s, bytes):
+            s = s.encode()
         return base64.b64encode(s).decode("utf-8")
 
     def test_001_CONNECTION(self):
@@ -1444,6 +1447,8 @@ class WebSocketSSLTest(unittest.TestCase):
 
     @staticmethod
     def _serialize_string(s):
+        if not isinstance(s, bytes):
+            s = s.encode()
         return base64.b64encode(s).decode("utf-8")
 
     def test_001_CONNECTION(self):
@@ -3485,7 +3490,6 @@ class LegacyTest(unittest.TestCase):
     def test_0220_KEY_ZOOM2(self):
         """Zoom 2 key test"""
         pass
-
 
     def test_999_DISCONNECT(self):
         if self.remote is None:
