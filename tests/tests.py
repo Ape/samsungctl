@@ -912,8 +912,8 @@ class WebSocketTest(unittest.TestCase):
         t.daemon = True
         t.start()
 
-        eden_event.wait(5.0)
-        installed_event.wait(5.0)
+        eden_event.wait(15.0)
+        installed_event.wait(15.0)
         if not eden_event.isSet() or not installed_event.isSet():
             self.skipTest('timed out')
         else:
@@ -1030,8 +1030,8 @@ class WebSocketTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -1108,7 +1108,7 @@ class WebSocketTest(unittest.TestCase):
 
                         self.client.on_message = on_message
 
-                        event.wait(2.0)
+                        event.wait(15.0)
                         if not event.isSet():
                             self.skipTest('timed out')
 
@@ -1127,8 +1127,8 @@ class WebSocketTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -1203,8 +1203,8 @@ class WebSocketTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -1286,8 +1286,8 @@ class WebSocketTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -1378,7 +1378,7 @@ class WebSocketTest(unittest.TestCase):
 
                                 self.client.on_message = on_message
 
-                                event.wait(2.0)
+                                event.wait(15.0)
                                 if not event.isSet():
                                     self.skipTest('timed out')
 
@@ -1397,8 +1397,8 @@ class WebSocketTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -2222,8 +2222,8 @@ class WebSocketSSLTest(unittest.TestCase):
         t.daemon = True
         t.start()
 
-        eden_event.wait(5.0)
-        installed_event.wait(5.0)
+        eden_event.wait(15.0)
+        installed_event.wait(15.0)
         if not eden_event.isSet() or not installed_event.isSet():
             self.skipTest('timed out')
         else:
@@ -2339,8 +2339,8 @@ class WebSocketSSLTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -2417,7 +2417,7 @@ class WebSocketSSLTest(unittest.TestCase):
 
                         self.client.on_message = on_message
 
-                        event.wait(2.0)
+                        event.wait(15.0)
                         if not event.isSet():
                             self.skipTest('timed out')
 
@@ -2435,8 +2435,8 @@ class WebSocketSSLTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -2510,8 +2510,8 @@ class WebSocketSSLTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -2591,8 +2591,8 @@ class WebSocketSSLTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -2682,7 +2682,7 @@ class WebSocketSSLTest(unittest.TestCase):
 
                                 self.client.on_message = on_message
 
-                                event.wait(2.0)
+                                event.wait(15.0)
                                 if not event.isSet():
                                     self.skipTest('timed out')
 
@@ -2700,8 +2700,8 @@ class WebSocketSSLTest(unittest.TestCase):
             t.daemon = True
             t.start()
 
-            eden_event.wait(5.0)
-            installed_event.wait(5.0)
+            eden_event.wait(15.0)
+            installed_event.wait(15.0)
             if not eden_event.isSet() or not installed_event.isSet():
                 self.skipTest('timed out')
             else:
@@ -2755,7 +2755,7 @@ class LegacySocket(object):
         self._event = threading.Event()
         self._thread = threading.Thread(target=self.loop)
         self._thread.start()
-        self.conn =  None
+        self.conn = None
 
     def send(self, message):
         # print(repr(message))
@@ -2768,7 +2768,6 @@ class LegacySocket(object):
         self.on_connect(data)
 
         try:
-
             while not self._event.isSet():
                 data = conn.recv(4096)
                 if self.on_message is not None:
@@ -3496,6 +3495,7 @@ class LegacyTest(unittest.TestCase):
             self.skipTest('no connection')
         else:
             self.remote.close()
+        self.client.close
 
     def on_disconnect(self):
         pass
