@@ -908,37 +908,23 @@ class WebSocketTest(unittest.TestCase):
         if not self.applications:
             self.skipTest('no applications received')
 
-    def test_0301_CHECK_APPLICATION_NAMES(self):
+    def test_0301_APPLICATION_CATEGORIES_CONTENT(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
         if not self.applications:
             self.skipTest('previous test failed')
-        else:
-            app_names = APP_NAMES[:]
-            unknown_names = []
+            return
 
-            for app in self.applications:
-                if app.name in app_names:
-                    app_names.remove(app.name)
-                else:
-                    unknown_names += [[app.name, app.id]]
+        for app in self.applications:
+            logger.info(app.name)
 
-    def test_0302_CHECK_APPLICATION_IDS(self):
-        if self.remote is None:
-            self.skipTest('no connection')
+            for category in app:
+                logger.info('    ' + category.title)
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            app_ids = APP_IDS[:]
-            unknown_ids = []
-
-            for app in self.applications:
-                if app.id in app_ids:
-                    app_ids.remove(app.id)
-                else:
-                    unknown_ids += [[app.name, app.id]]
+                for content in category:
+                    logger.info('        ' + content.title)
 
     def test_0303_GET_APPLICATION(self):
         if self.remote is None:
@@ -2012,37 +1998,23 @@ class WebSocketSSLTest(unittest.TestCase):
         if not self.applications:
             self.skipTest('no applications received')
 
-    def test_0301_CHECK_APPLICATION_NAMES(self):
+    def test_0301_APPLICATION_CATEGORIES_CONTENT(self):
         if self.remote is None:
             self.skipTest('no connection')
+            return
 
         if not self.applications:
             self.skipTest('previous test failed')
-        else:
-            app_names = APP_NAMES[:]
-            unknown_names = []
+            return
 
-            for app in self.applications:
-                if app.name in app_names:
-                    app_names.remove(app.name)
-                else:
-                    unknown_names += [[app.name, app.id]]
+        for app in self.applications:
+            logger.info(app.name)
 
-    def test_0302_CHECK_APPLICATION_IDS(self):
-        if self.remote is None:
-            self.skipTest('no connection')
+            for category in app:
+                logger.info('    ' + category.title)
 
-        if not self.applications:
-            self.skipTest('previous test failed')
-        else:
-            app_ids = APP_IDS[:]
-            unknown_ids = []
-
-            for app in self.applications:
-                if app.id in app_ids:
-                    app_ids.remove(app.id)
-                else:
-                    unknown_ids += [[app.name, app.id]]
+                for content in category:
+                    logger.info('        ' + content.title)
 
     def test_0303_GET_APPLICATION(self):
         if self.remote is None:

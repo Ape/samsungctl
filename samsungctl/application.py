@@ -112,7 +112,7 @@ class Application(object):
 
     def get_category(self, title):
         for group in self:
-            if group.title == title:
+            if group.title.encode() == title.encode():
                 return group
 
     @LogIt
@@ -164,7 +164,7 @@ class Application(object):
             def app_icon_callback(data):
                 data = data['imageBase64']
                 if data is not None:
-                    data = base64.decodestring(data)
+                    data = base64.decodebytes(data)
                 icon[0] = data
                 event.set()
 
@@ -190,7 +190,7 @@ class Accelerator(object):
 
     def get_content(self, title):
         for content in self:
-            if content.title == title:
+            if content.title.encode() == title.encode():
                 return content
 
     def __iter__(self):
