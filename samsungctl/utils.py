@@ -4,8 +4,6 @@ import sys
 from functools import update_wrapper
 
 PY3 = sys.version_info[0] > 2
-
-
 logger = logging.getLogger('samsungctl')
 
 
