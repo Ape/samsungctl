@@ -350,6 +350,15 @@ class RemoteWebsocket(object):
     @property
     @LogItWithReturn
     def applications(self):
+        if not self._running:
+            try:
+                self.open()
+            except RuntimeError:
+                if key in ('KEY_POWERON', 'KEY_POWER'):
+                    self.power = True
+                    return
+                else:
+                    raise
         eden_event = threading.Event()
         installed_event = threading.Event()
 
