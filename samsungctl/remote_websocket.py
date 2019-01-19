@@ -286,8 +286,17 @@ class RemoteWebsocket(object):
     @LogIt
     def send(self, method, **params):
         if self.sock is None:
-            logger.info('Is the TV on???')
-            return
+            if method != 'ms.remote.control':
+                if not self._running:
+                    try:
+                        self.open()
+                    except RuntimeError:
+                        logger.info('Is the TV on???')
+                        return
+            else:
+                logger.info('Is the TV on???')
+                return
+
 
         payload = dict(
             method=method,
@@ -350,11 +359,6 @@ class RemoteWebsocket(object):
     @property
     @LogItWithReturn
     def applications(self):
-        if not self._running:
-            try:
-                self.open()
-            except RuntimeError:
-                raise
         eden_event = threading.Event()
         installed_event = threading.Event()
 
