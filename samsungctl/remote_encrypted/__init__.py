@@ -11,7 +11,6 @@ import websocket
 class RemoteEncrypted(object):
 
     def __init__(self, config):
-        self.StartPairing()
         if 'ctx' in config and config['ctx']:
             self.ctx = config['ctx']
         else:
@@ -50,7 +49,7 @@ class RemoteEncrypted(object):
 
     def open(self):
         if self.ctx is None:
-
+            self.StartPairing()
             while self.ctx is None:
                 tvPIN = input("Please enter pin from tv: ")
 
