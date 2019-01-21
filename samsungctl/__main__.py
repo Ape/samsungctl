@@ -162,6 +162,14 @@ def main():
         help="TV hostname or IP address"
     )
     parser.add_argument(
+        "--session-id",
+        help="TV hostname or IP address"
+    )
+    parser.add_argument(
+        "--ctx",
+        help="TV hostname or IP address"
+    )
+    parser.add_argument(
         "--port",
         type=int,
         help="TV port number (TCP)"

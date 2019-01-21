@@ -12,13 +12,18 @@ class RemoteEncrypted(object):
 
     def __init__(self, config):
         self.StartPairing()
-        if 'ctx' in config:
+        if 'ctx' in config and config['ctx']:
             self.ctx = config['ctx']
         else:
             self.ctx = None
 
-        if 'session_id' in config:
-            self.currentSessionId = config['session_id']
+        if 'session_id' in config and config['session_id']:
+            try:
+                self.currentSessionId = int(config['session_id'])
+            except ValueError:
+                self.currentSessionId = config['session_id']
+        else:
+            self.currentSessionId = None
 
         self.SKPrime = False
         self.lastRequestId = 0
@@ -66,7 +71,16 @@ class RemoteEncrypted(object):
             self.config['session_id'] = self.currentSessionId
             self.config['ctx'] = self.ctx
 
-            print("SessionID: " + str(self.currentSessionId))
+            print('***************************************')
+            print('USE THE FOLLOWING NEXT TIME YOU CONNECT')
+            print('***************************************')
+            print(
+                '--host {0} --method encryption --session-id {1} --ctx {2}'.format(
+                    self.tvIP,
+                    self.currentSessionId,
+                    self.ctx
+                )
+            )
 
             self.ClosePinPageOnTv()
             print("Authorization successfull :)\n")
