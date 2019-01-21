@@ -286,6 +286,14 @@ class RemoteWebsocket(object):
     @LogIt
     def send(self, method, **params):
         if self.sock is None:
+            if method != 'ms.remote.control':
+                if not self._running:
+                    try:
+                        self.open()
+                        return self.send(method, **params)
+                    except RuntimeError:
+                        pass
+
             logger.info('Is the TV on???')
             return
 
@@ -294,6 +302,7 @@ class RemoteWebsocket(object):
             params=params
         )
         self.sock.send(json.dumps(payload))
+        self.send_event.wait(0.2)
 
     @LogIt
     def control(self, key, cmd='Click'):

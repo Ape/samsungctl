@@ -470,7 +470,7 @@ with samsungctl.Remote(config) as remote:
     for app in remote.applications:
         print('name:', app.name)
         print('=' * 30)
-        for content_group in application:
+        for content_group in app:
             print('   ', content_group.title)
             print('   ', '-' * 26)
             for content in content_group:
