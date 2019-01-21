@@ -48,6 +48,7 @@ class RemoteWebsocket(object):
         self._loop_event = threading.Event()
         self.receive_lock = threading.Lock()
         self._power_event = threading.Event()
+        self.send_event = threading.Event()
         self._registered_callbacks = []
         self._thread = None
         self._mac_address = None
