@@ -1,11 +1,13 @@
 from __future__ import print_function
 from . import crypto
-import sys
 import re
 from .command_encryption import AESCipher
 import requests
 import time
 import websocket
+import logging
+
+logger = logging.getLogger('samsungctl')
 
 
 class RemoteEncrypted(object):
@@ -53,7 +55,7 @@ class RemoteEncrypted(object):
             while self.ctx is None:
                 tvPIN = input("Please enter pin from tv: ")
 
-                print("Got pin: '" + tvPIN + "'\n")
+                logger.info("Got pin: '" + tvPIN + "'\n")
 
                 self.FirstStepOfPairing()
                 output = self.HelloExchange(tvPIN)
@@ -61,19 +63,19 @@ class RemoteEncrypted(object):
 
                     self.ctx = output['ctx'].hex()
                     self.SKPrime = output['SKPrime']
-                    print("ctx: " + self.ctx)
-                    print("Pin accepted :)\n")
+                    logger.debug("ctx: " + self.ctx)
+                    logger.info("Pin accepted :)\n")
                 else:
-                    print("Pin incorrect. Please try again...\n")
+                    logger.info("Pin incorrect. Please try again...\n")
 
             self.currentSessionId = self.AcknowledgeExchange()
             self.config['session_id'] = self.currentSessionId
             self.config['ctx'] = self.ctx
 
-            print('***************************************')
-            print('USE THE FOLLOWING NEXT TIME YOU CONNECT')
-            print('***************************************')
-            print(
+            logger.info('***************************************')
+            logger.info('USE THE FOLLOWING NEXT TIME YOU CONNECT')
+            logger.info('***************************************')
+            logger.info(
                 '--host {0} --method encryption --session-id {1} --ctx {2}'.format(
                     self.tvIP,
                     self.currentSessionId,
@@ -82,7 +84,7 @@ class RemoteEncrypted(object):
             )
 
             self.ClosePinPageOnTv()
-            print("Authorization successfull :)\n")
+            logger.info("Authorization successfull :)\n")
 
         millis = int(round(time.time() * 1000))
         step4_url = (
@@ -100,7 +102,7 @@ class RemoteEncrypted(object):
             websocket_response.text.split(':')[0]
         )
 
-        print(websocket_url)
+        logger.debug(websocket_url)
 
         self.aesLib = AESCipher(self.ctx.upper(), self.currentSessionId)
         self.connection = websocket.create_connection(websocket_url)
@@ -128,7 +130,7 @@ class RemoteEncrypted(object):
         output = re.search('state>([^<>]*)</state>', page, flags=re.IGNORECASE)
         if output is not None:
             state = output.group(1)
-            print("Current state: " + state)
+            logger.debug("Current state: " + state)
             if state == "stopped":
                 return True
         return False
@@ -142,10 +144,10 @@ class RemoteEncrypted(object):
         self.lastRequestId = 0
 
         if self.CheckPinPageOnTv():
-            print("Pin NOT on TV")
+            logger.debug("Pin NOT on TV")
             self.ShowPinPageOnTv()
         else:
-            print("Pin ON TV")
+            logger.debug("Pin ON TV")
 
     def HelloExchange(self, pin):
         hello_output = crypto.generateServerHello(self.UserId, pin)
@@ -162,7 +164,7 @@ class RemoteEncrypted(object):
         secondStepURL = self.GetFullRequestUri(1, self.AppId, self.deviceId)
         secondStepResponse = requests.post(secondStepURL, content).text
 
-        print('secondStepResponse: ' + secondStepResponse)
+        logger.debug('secondStepResponse: ' + secondStepResponse)
 
         output = re.search(
             'request_id.*?(\d).*?GeneratorClientHello.*?:.*?(\d[0-9a-zA-Z]*)',
@@ -198,8 +200,9 @@ class RemoteEncrypted(object):
         thirdStepResponse = requests.post(thirdStepURL, content).text
 
         if "secure-mode" in thirdStepResponse:
-            print("TODO: Implement handling of encryption flag!!!!")
-            sys.exit(-1)
+            raise RuntimeError(
+                "TODO: Implement handling of encryption flag!!!!"
+            )
 
         output = re.search(
             'ClientAckMsg.*?:.*?(\d[0-9a-zA-Z]*).*?session_id.*?(\d)',
@@ -208,16 +211,16 @@ class RemoteEncrypted(object):
         )
 
         if output is None:
-            print("Unable to get session_id and/or ClientAckMsg!!!")
-            sys.exit(-1)
+            raise RuntimeError(
+                "Unable to get session_id and/or ClientAckMsg!!!"
+            )
 
         clientAck = output.group(1)
         if not crypto.parseClientAcknowledge(clientAck, self.SKPrime):
-            print("Parse client ac message failed.")
-            sys.exit(-1)
+            raise RuntimeError("Parse client ac message failed.")
 
         sessionId = output.group(2)
-        print("sessionId: " + sessionId)
+        logger.debug("sessionId: " + sessionId)
 
         return sessionId
 
