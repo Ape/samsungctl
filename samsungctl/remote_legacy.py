@@ -6,7 +6,7 @@ import time
 from . import exceptions
 
 
-class RemoteLegacy():
+class RemoteLegacy(object):
     """Object for remote control connection."""
 
     def __init__(self, config):

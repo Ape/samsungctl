@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import socket
 import time
 
 from . import exceptions
@@ -10,7 +9,7 @@ from . import exceptions
 URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
 
-class RemoteWebsocket():
+class RemoteWebsocket(object):
     """Object for remote control connection."""
 
     def __init__(self, config):

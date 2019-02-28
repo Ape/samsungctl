@@ -122,7 +122,7 @@ def main():
     except exceptions.AccessDenied:
         logging.error("Error: Access denied!")
     except exceptions.UnknownMethod:
-        logging.error("Error: Unknown method '{}'".format(config["method"]))
+        logging.error("Error: Unknown method '%s'", config["method"])
     except socket.timeout:
         logging.error("Error: Timed out!")
     except OSError as e:
