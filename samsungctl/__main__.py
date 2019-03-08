@@ -13,6 +13,9 @@ from . import exceptions
 from . import Remote
 
 
+_LOGGER = logging.getLogger(__package__)
+
+
 def _read_config():
     config = collections.defaultdict(lambda: None, {
         "name": "samsungctl",
@@ -53,7 +56,7 @@ def _read_config():
             config_json = json.load(config_file)
         except ValueError as e:
             message = "Warning: Could not parse the configuration file.\n  %s"
-            logging.warning(message, e)
+            _LOGGER.warning(message, e)
             return config
 
         config.update(config_json)
@@ -103,7 +106,7 @@ def main():
     config.update({k: v for k, v in vars(args).items() if v is not None})
 
     if not config["host"]:
-        logging.error("Error: --host must be set")
+        _LOGGER.error("Error: --host must be set")
         return
 
     try:
@@ -112,21 +115,21 @@ def main():
                 remote.control(key)
 
             if args.interactive:
-                logging.getLogger().setLevel(logging.ERROR)
+                _LOGGER.setLevel(logging.ERROR)
                 from . import interactive
                 interactive.run(remote)
             elif len(args.key) == 0:
-                logging.warning("Warning: No keys specified.")
+                _LOGGER.warning("Warning: No keys specified.")
     except exceptions.ConnectionClosed:
-        logging.error("Error: Connection closed!")
+        _LOGGER.error("Error: Connection closed!")
     except exceptions.AccessDenied:
-        logging.error("Error: Access denied!")
+        _LOGGER.error("Error: Access denied!")
     except exceptions.UnknownMethod:
-        logging.error("Error: Unknown method '{}'".format(config["method"]))
+        _LOGGER.error("Error: Unknown method '{}'".format(config["method"]))
     except socket.timeout:
-        logging.error("Error: Timed out!")
+        _LOGGER.error("Error: Timed out!")
     except OSError as e:
-        logging.error("Error: %s", e.strerror)
+        _LOGGER.error("Error: %s", e.strerror)
 
 
 if __name__ == "__main__":
