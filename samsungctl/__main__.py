@@ -1,3 +1,4 @@
+import appdirs
 import argparse
 import collections
 import json
@@ -25,12 +26,8 @@ def _read_config():
     file_loaded = False
     directories = []
 
-    xdg_config = os.getenv("XDG_CONFIG_HOME")
-    if xdg_config:
-        directories.append(xdg_config)
-
-    directories.append(os.path.join(os.getenv("HOME"), ".config"))
-    directories.append("/etc")
+    directories.append(appdirs.user_config_dir())
+    directories.append(appdirs.site_config_dir(title))
 
     for directory in directories:
         path = os.path.join(directory, "samsungctl.conf")
