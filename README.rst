@@ -68,20 +68,20 @@ arguments:
       key                 keys to be sent (e.g. KEY_VOLDOWN)
 
     optional arguments:
-      -h, --help          show this help message and exit
-      --version           show program's version number and exit
-      -v, --verbose       increase output verbosity
-      -q, --quiet         suppress non-fatal output
-      -i, --interactive   interactive control
-      --host HOST         TV hostname or IP address
-      --port PORT         TV port number (TCP)
-      --method METHOD     Connection method (legacy or websocket)
-      --name NAME         remote control name
-      --description DESC  remote control description
-      --id ID             remote control id
-      --timeout TIMEOUT   socket timeout in seconds (0 = no timeout)
+      -h, --help          show this help message and exit.
+      --version           show program's version number and exit.
+      -v, --verbose       increase output verbosity.
+      -q, --quiet         suppress non-fatal output.
+      -i, --interactive   interactive control.
+      --host HOST         TV hostname or IP address.
+      --port PORT         TV port number (TCP).
+      --method METHOD     Connection method (legacy or websocket).
+      --name NAME         remote control name.
+      --description DESC  remote control description.
+      --id ID             remote control id.
+      --timeout TIMEOUT   socket timeout in seconds (0 = no timeout).
 
-    E.g. samsungctl --host 192.168.0.10 --name myremote KEY_VOLDOWN
+    E.g.:samsungctl --host 192.168.0.10 --name myremote KEY_VOLDOWN
 
 The settings can be loaded from a configuration file. The file is searched from
 ``$XDG_CONFIG_HOME/samsungctl.conf``, ``~/.config/samsungctl.conf``, and
@@ -218,9 +218,9 @@ References
 ==========
 
 I did not reverse engineer the control protocol myself and samsungctl is not
-the only implementation. Here is the list of things that inspired samsungctl.
+the only implementation.Here is the list of things that inspired samsungctl.
 
-- http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
-- https://gist.github.com/danielfaust/998441
-- https://github.com/Bntdumas/SamsungIPRemote
-- https://github.com/kyleaa/homebridge-samsungtv2016
+* http://sc0ty.pl/2012/02/samsung-tv-network-remote-control-protocol/
+* https://gist.github.com/danielfaust/998441
+* https://github.com/Bntdumas/SamsungIPRemote
+* https://github.com/kyleaa/homebridge-samsungtv2016
