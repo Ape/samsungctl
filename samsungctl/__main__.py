@@ -1,3 +1,4 @@
+// 이 프로젝트는 버려진건가요?? 제가 다시 이끌어가겠습니다. 파이썬이 뭔지 알려주마 쓰레기야  
 import argparse
 import collections
 import json
@@ -10,7 +11,7 @@ from . import __doc__ as doc
 from . import __title__ as title
 from . import __version__ as version
 from . import exceptions
-from . import Remote
+from . import Remote // 이거 필요없어요 
 
 
 def _read_config():
@@ -19,7 +20,7 @@ def _read_config():
         "description": "PC",
         "id": "",
         "method": "legacy",
-        "timeout": 0,
+        "timeout": 1,
     })
 
     file_loaded = False
