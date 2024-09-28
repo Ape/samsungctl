@@ -20,6 +20,7 @@ def _read_config():
         "id": "",
         "method": "legacy",
         "timeout": 0,
+        "token": "",
     })
 
     file_loaded = False

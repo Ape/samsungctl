@@ -3,17 +3,18 @@ import json
 import logging
 import socket
 import time
+import ssl
 
 from . import exceptions
 
-
-URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
+URL_FORMAT = "wss://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
 
 class RemoteWebsocket():
     """Object for remote control connection."""
 
     def __init__(self, config):
+        self.token = ""
         import websocket
 
         if not config["port"]:
@@ -24,8 +25,10 @@ class RemoteWebsocket():
 
         url = URL_FORMAT.format(config["host"], config["port"],
                                 self._serialize_string(config["name"]))
+        if config["token"]:
+            url += "&token=" + config["token"]
 
-        self.connection = websocket.create_connection(url, config["timeout"])
+        self.connection = websocket.create_connection(url, ssl_handshake_timeout=config["timeout"], sslopt={"cert_reqs": ssl.CERT_NONE})
 
         self._read_response()
 
@@ -72,6 +75,8 @@ class RemoteWebsocket():
             raise exceptions.UnhandledResponse(response)
 
         logging.debug("Access granted.")
+        if response.get("token", False):
+            logging.info("Token: {}".format(response["token"]))
 
     @staticmethod
     def _serialize_string(string):
