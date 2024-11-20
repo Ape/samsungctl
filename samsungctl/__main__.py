@@ -29,7 +29,10 @@ def _read_config():
     if xdg_config:
         directories.append(xdg_config)
 
-    directories.append(os.path.join(os.getenv("HOME"), ".config"))
+    home_dir = os.getenv("HOME")
+    if home_dir:
+        directories.append(os.path.join(home_dir, ".config"))
+
     directories.append("/etc")
 
     for directory in directories:
