@@ -3,6 +3,7 @@ import json
 import logging
 import socket
 import time
+import requests
 
 from . import exceptions
 
@@ -12,6 +13,7 @@ URL_FORMAT = "ws://{}:{}/api/v2/channels/samsung.remote.control?name={}"
 
 class RemoteWebsocket():
     """Object for remote control connection."""
+    _config = None
 
     def __init__(self, config):
         import websocket
@@ -22,6 +24,7 @@ class RemoteWebsocket():
         if config["timeout"] == 0:
             config["timeout"] = None
 
+        self._config = config
         url = URL_FORMAT.format(config["host"], config["port"],
                                 self._serialize_string(config["name"]))
 
@@ -62,6 +65,21 @@ class RemoteWebsocket():
         time.sleep(self._key_interval)
 
     _key_interval = 0.5
+
+    def is_tv_on(self):
+        base_url = "http://{}:{}/api/v2/"
+        url = base_url.format(self._config['host'], self._config['port'])
+        try:
+            res = requests.get(url, timeout=5)
+        except (requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.HTTPError,
+                requests.exceptions.ReadTimeout):
+            return False
+        if res is not None and res.status_code == 200:
+            return True
+        else:
+            return False
 
     def _read_response(self):
         response = self.connection.recv()
